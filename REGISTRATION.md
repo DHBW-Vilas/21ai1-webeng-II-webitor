@@ -24,11 +24,11 @@ This website is an online code editor.
 
 -   JavaScript (for Frontend)
 -   Node.js
--   Database???
+-   MongoDB
 
 ## Contributors
 
 | Name        | Matrikel number | Github account |
 | ----------- | --------------- | -------------- |
-| Val Richter | ???             | ArtInLines     |
+| Val Richter | 8439777         | ArtInLines     |
 | Jakob Kautz | 5101173         | JakobPK        |
