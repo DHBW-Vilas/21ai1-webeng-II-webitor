@@ -19,7 +19,9 @@
 	},
 	"homepage": "https://github.com/DHBW-Vilas/21ai1-webeng-II-webitor#readme",
 	"dependencies": {
-		"express": "^4.18.2"
+		"dotenv": "^16.0.3",
+		"express": "^4.18.2",
+		"mongoose": "^7.0.4"
 	},
 	"devDependencies": {
 		"nodemon": "^2.0.22"
