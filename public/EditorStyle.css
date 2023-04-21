@@ -1,13 +1,16 @@
 /* BASICS */
 .container {
-    width: 30%;
+    color: white;
+    background-Color: #242323;
+    width: 33.33%;
+    height: 100%;
     float: left;
     padding: 10px;
     box-sizing: border-box;
   }
   
   .container:nth-child(2) {
-    margin: 0 5%;
+    margin: 0%;
   }
   
   /* This CSS applies to the entire page */
