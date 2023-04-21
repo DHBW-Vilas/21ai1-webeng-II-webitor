@@ -1,19 +1,63 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="UTF-8" />
-		<title>Editor Page</title>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css" />
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
-	</head>
-	<body>
-		<textarea id="editor"></textarea>
-		<script>
-			var myEditor = CodeMirror.fromTextArea(document.getElementById('editor'), {
-				lineNumbers: true,
-				mode: 'javascript',
-			});
-		</script>
-	</body>
+<head>
+    <meta charset="UTF-8">
+    <title>CodeMirror HTML Page</title>
+    <link rel="stylesheet" href="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\CodeMirror_StylePage.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h2>File Explorer</h2>
+	<p>	<div id="file-explorer">
+  <ul>
+    <li>File 1</li>
+    <li>File 2</li>
+    <li>Directory 1
+      <ul>
+        <li>File 3</li>
+        <li>File 4</li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<script>
+var fileExplorer = document.getElementById("file-explorer");
+fileExplorer.addEventListener("click", function(e) {
+  if (e.target.nodeName === "LI") {
+    var fileName = e.target.textContent;
+    var fileContents = getFileContents(fileName);
+    editor.setValue(fileContents);
+  }
+});
+function getFileContents(fileName) {
+  // make an AJAX call or fetch request to the server to load the file contents
+}
+</script>
+</p>
+</div>
+
+
+ <div class="container">
+    <h2>Code Editor</h2>	
+    <p><textarea id="editor"></textarea>
+    <script>
+        var myEditor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+            lineNumbers: true,
+            mode: "javascript"
+			//theme: "monokai"
+        });
+    </script></p>
+	</div>
+	
+	  <div class="container">
+    <h2>Console</h2>
+    <p>This one will only exist if we can run code or shell commands.</p>
+  </div>
+
+  <div class="clearfix"></div>
+	
+</body>
 </html>
