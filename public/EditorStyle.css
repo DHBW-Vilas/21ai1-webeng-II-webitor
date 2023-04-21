@@ -2,15 +2,22 @@
 .container {
     color: white;
     background-Color: #242323;
-    width: 33.33%;
     height: 100%;
     float: left;
-    padding: 10px;
+    padding: 2px;
     box-sizing: border-box;
   }
   
+  .container:nth-child(1) {
+    background-Color: black;
+    width: 20%;
+  }
   .container:nth-child(2) {
-    margin: 0%;
+    width: 40%;
+  }
+  .container:nth-child(3) {
+    background-Color: black;
+    width: 40%;
   }
   
   /* This CSS applies to the entire page */
@@ -33,7 +40,7 @@
    /*  Set height, width, borders, and global font properties here */
     font-family: monospace;
     height: 700px;
-    width: 500px;
+    width: 95%;
     color: #000;
     direction: ltr;
     background-Color: #111;
