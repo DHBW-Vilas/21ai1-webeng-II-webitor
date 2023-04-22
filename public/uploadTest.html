@@ -9,6 +9,9 @@
 	</head>
 	<body>
 		<p>This is a test for uploading files/folders.</p>
-		<input type="file" id="input" webkitdirectory directory multiple />
+		<form action="/upload" method="post" enctype="multipart/form-data">
+			<input type="text" name="name" id="name-input" />
+			<input type="file" id="file-input" webkitdirectory directory multiple />
+		</form>
 	</body>
 </html>

@@ -1,16 +1,23 @@
 const process = require('process'); // for accessing environment variables
 const path = require('path'); // for creating correct File-Descriptors on the given OS
+const fs = require('fs/promises'); // for reading uploaded files from tmp dir
+const { existsSync } = require('fs');
 const crypto = require('crypto'); // for generating authentication tokens
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: false }); // for loading environment variables from '.env'
+require('dotenv').config({ path: path.join(__dirname, '..', 'config.env'), override: false }); // for loading environment variables from '.env'
 const mongoose = require('mongoose'); // for connecting with MongoDB
 const express = require('express'); // Web-Server Framework, that is being used
 const app = express();
 const cookieParser = require('cookie-parser'); // for parsing cookies
 const bcrypt = require('bcrypt'); // for cryptographically secure password-hashing
+const formidable = require('formidable'); // for uploading files
 
 // Shortcut-constants:
 const ENV = process.env;
-const publicPath = path.join(__dirname, 'public');
+const publicPath = path.join(__dirname, '..', 'public');
+const tmpDir = path.join(__dirname, '..', 'tmp');
+
+if (!existsSync(publicPath)) fs.mkdir(publicPath);
+if (!existsSync(tmpDir)) fs.mkdir(tmpDir);
 
 // Global Read-Only Variables
 const SALT_ROUNDS = 10;
@@ -25,11 +32,12 @@ function genAuthTok(size = 30) {
 
 // Connect to MongoDB && load required Mongo-Schemas
 async function connectDB() {
-	const db = await mongoose.connect(`mongodb+srv://${ENV.DB_USER}:${ENV.DB_PASS}@cluster0.91saw3c.mongodb.net/?retryWrites=true&w=majority`);
+	const mongoURI = `mongodb+srv://${ENV.DB_USER}:${ENV.DB_PASS}@cluster0.91saw3c.mongodb.net/?retryWrites=true&w=majority`;
+	const db = await mongoose.connect(mongoURI);
 	console.log(`MongoDB connected: ${db.connection.host}`);
 }
 connectDB();
-const userModel = require('./models/User.js');
+const Models = require('./models.js');
 
 // Load middleware for Express Framework
 app.use('/public', express.static(publicPath));
@@ -59,10 +67,10 @@ app.get('/', (req, res) => {
 
 		if (!name || !pass) return res.status(418).json({ err: 'Invalid Username or Password.' });
 		if (Buffer.from(pass).byteLength > 72) return res.status(418).json({ err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
-		if ((await userModel.exists({ name })) != null) return res.status(418).json({ err: 'Username is already taken' });
+		if ((await Models.user.exists({ name })) != null) return res.status(418).json({ err: 'Username is already taken' });
 
 		const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
-		const newUser = await userModel.create({ name, pass: hashedPass });
+		const newUser = await Models.user.create({ name, pass: hashedPass });
 		const authTok = genAuthTok();
 		AUTH_TOKS[authTok] = newUser.toObject();
 		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax' }).redirect('/protected');
@@ -74,14 +82,14 @@ app.get('/', (req, res) => {
 		if (!name || !pass) return res.status(418).json({ err: 'Invalid Username or Password.' });
 		if (Buffer.from(pass).byteLength > 72) return res.status(418).json({ err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
 
-		const user = await userModel.findOne({ name });
+		const user = await Models.user.findOne({ name });
 		if (!user) res.status(418).json({ err: 'Wrong username.' });
 		const cmpRes = await bcrypt.compare(pass, user.pass);
 		if (!cmpRes) res.status(418).json({ err: 'Wrong password.' });
 
 		const authTok = genAuthTok();
 		AUTH_TOKS[authTok] = user.toObject();
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax' }).redirect('/protected');
+		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).redirect('/protected');
 	})
 	.get('/protected', [checkAuth], (req, res) => {
 		if (!req.user) return res.redirect('/register');
@@ -90,7 +98,41 @@ app.get('/', (req, res) => {
 	.get('/protected/name', [checkAuth], (req, res) => {
 		if (!req.user) return res.status(405).json({ err: 'Not authenticated' });
 		else return res.status(200).json({ name: req.user.name });
+	})
+	.post('/new/:projectName', [checkAuth], async (req, res) => {
+		// @performance
+		// seems kinda dumb that we need to first store the files locally
+		// before reading them into memory (again) and sending them to mongodb.
+		// The only other way would however be to use something like GridFS,
+		// which apparently allows streamed buffer-upload.
+		// Our files shouldn't be bigger than 16MB though, so using GridFS seems like overkill.
+		// It seems especially unimportant if we can start using the files on the client
+		// before the server has responded.
+
+		const projectName = req.params.projectName;
+		const form = formidable({ keepExtensions: true, multiples: true, filter: filterFiles, uploadDir: tmpDir });
+		form.parse(req, async (err, fields, files) => {
+			if (err) throw err;
+
+			let fileIDs = [];
+			for await (const f of files.file) {
+				const fileBuffer = await fs.readFile(f.filepath);
+				const doc = await Models.file.create({ path: f.originalFilename, file: fileBuffer });
+				fileIDs.push(doc._id);
+				fs.rm(f.filepath);
+			}
+
+			const doc = await Models.project.create({ name: projectName, files: fileIDs, editors: [req.user._id] });
+			console.log(doc.toObject());
+			res.json({ project: doc.toObject() });
+		});
 	});
+
+function filterFiles({ name, originalFilename, mimetype }) {
+	return true; // no filter yet
+}
+
+function streamToMongoDB() {}
 
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));
