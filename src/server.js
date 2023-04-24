@@ -44,22 +44,33 @@ app.use('/public', express.static(publicPath));
 app.use(express.json());
 app.use(cookieParser(ENV.SECRET));
 
-// req.user holds the user object or null if the request is not authenticated
-function checkAuth(req, res, next) {
+// req.userId holds the user ID or an error is raised
+function forceAuth(req, res, next) {
 	const authTok = req.signedCookies['auth'];
-	req.user = AUTH_TOKS[authTok] ?? null;
-	next();
+	req.userId = AUTH_TOKS[authTok] ?? null;
+	if (!AUTH_TOKS[authTok]) next(new Error('Unauthenticated'));
+	else {
+		res.cookie('url', '');
+		next();
+	}
+}
+
+// If
+function authErr(err, req, res, next) {
+	console.log({ id: req.userId });
+	if (req.userId === null) {
+		res.cookie('url', req.originalUrl).redirect('/login');
+	} else {
+		next(err);
+	}
 }
 
 // Set up Routing
 app.get('/', (req, res) => {
 	res.send('Test');
 })
-	.get('/test', (req, res) => {
-		res.sendFile(path.join(publicPath, 'uploadTest.html'));
-	})
-	.get('/register', (req, res) => {
-		res.sendFile(path.join(publicPath, 'register.html'));
+	.get('/login', (req, res) => {
+		res.sendFile(path.join(publicPath, 'login.html'));
 	})
 	.post('/register', async (req, res) => {
 		let name = req.body.name || null;
@@ -70,10 +81,11 @@ app.get('/', (req, res) => {
 		if ((await Models.user.exists({ name })) != null) return res.status(418).json({ err: 'Username is already taken' });
 
 		const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
-		const newUser = await Models.user.create({ name, pass: hashedPass });
+		const newUser = await Models.user.create({ name, pass: hashedPass, projects: [] });
 		const authTok = genAuthTok();
-		AUTH_TOKS[authTok] = newUser.toObject();
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax' }).redirect('/protected');
+		AUTH_TOKS[authTok] = newUser._id;
+		const newURL = req.cookies['url'] || '/';
+		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax' }).redirect(newURL);
 	})
 	.post('/login', async (req, res) => {
 		let name = req.body.name || null;
@@ -83,23 +95,23 @@ app.get('/', (req, res) => {
 		if (Buffer.from(pass).byteLength > 72) return res.status(418).json({ err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
 
 		const user = await Models.user.findOne({ name });
-		if (!user) res.status(418).json({ err: 'Wrong username.' });
+		if (!user) return res.status(418).json({ err: 'Wrong username.' });
+		console.log({ user: user });
 		const cmpRes = await bcrypt.compare(pass, user.pass);
 		if (!cmpRes) res.status(418).json({ err: 'Wrong password.' });
 
 		const authTok = genAuthTok();
-		AUTH_TOKS[authTok] = user.toObject();
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).redirect('/protected');
+		AUTH_TOKS[authTok] = user._id;
+		const newURL = req.cookies['url'] || '/';
+		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).redirect(newURL);
 	})
-	.get('/protected', [checkAuth], (req, res) => {
-		if (!req.user) return res.redirect('/register');
-		else return res.sendFile(path.join(publicPath, 'protected.html'));
+	.get('/projects', [forceAuth, authErr], async (req, res) => {
+		const user = await Models.user.findById(req.userId);
+		const projects = [];
+		for await (const projectId of user.projects) projects.push(await Models.project.findById(projectId));
+		return res.send({ projects });
 	})
-	.get('/protected/name', [checkAuth], (req, res) => {
-		if (!req.user) return res.status(405).json({ err: 'Not authenticated' });
-		else return res.status(200).json({ name: req.user.name });
-	})
-	.post('/new/:projectName', [checkAuth], async (req, res) => {
+	.post('/new/:projectName', [forceAuth, authErr], async (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
@@ -122,17 +134,18 @@ app.get('/', (req, res) => {
 				fs.rm(f.filepath);
 			}
 
-			const doc = await Models.project.create({ name: projectName, files: fileIDs, editors: [req.user._id] });
+			const doc = await Models.project.create({ name: projectName, files: fileIDs, editors: [req.userId] });
 			console.log(doc.toObject());
 			res.json({ project: doc.toObject() });
 		});
 	});
 
 function filterFiles({ name, originalFilename, mimetype }) {
+	// TODO: Filter certain ignored files
+	// For example: filter all files in a .git folder
+
 	return true; // no filter yet
 }
-
-function streamToMongoDB() {}
 
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));

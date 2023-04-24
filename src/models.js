@@ -8,14 +8,14 @@ const fileSchema = new Schema({
 
 const projectSchema = new Schema({
 	name: String,
-	files: [ObjectId],
-	editors: [ObjectId],
+	files: [{ type: ObjectId, ref: 'fileModel' }],
+	editors: [{ type: ObjectId, ref: 'userModel' }],
 });
 
 const userSchema = new Schema({
 	name: String,
 	pass: String,
-	projects: [ObjectId],
+	projects: [{ type: ObjectId, ref: 'projectModel' }],
 });
 
 module.exports = { file: mongoose.model('fileModel', fileSchema), project: mongoose.model('projectModel', projectSchema), user: mongoose.model('userModel', userSchema) };
