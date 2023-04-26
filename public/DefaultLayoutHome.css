@@ -168,12 +168,28 @@
       }
   }
 
-  form {
+/*File Upload in box 1*/
+
+
+/*per Drag and Drop and Selection*/
+#drop-area {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    border: 2px dashed rgb(61, 79, 93);
+    padding: 2rem;
+    margin-top: 2rem;
   }
-  label, input[type="submit"] {
+  
+  #drop-area.highlight {
+    background-color: rgba(0, 123, 255, 0.1);
+  }
+  
+  #drop-area span {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: rgb(61, 79, 93);
     margin-top: 1rem;
   }
   
