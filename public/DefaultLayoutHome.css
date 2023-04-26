@@ -167,4 +167,13 @@
           text-align: center;
       }
   }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  label, input[type="submit"] {
+    margin-top: 1rem;
+  }
   

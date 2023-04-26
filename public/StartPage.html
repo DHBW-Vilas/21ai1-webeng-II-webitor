@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Home Page for Registered Users of the Webitor.">
     <title>Webitor Home</title>
-    <link id="style-link" rel="stylesheet" type="text/css" href="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\goingForPageLazout.css">
-	<script src="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\switchStyle.js"></script>
+    <link id="style-link" rel="stylesheet" type="text/css" href="/public/DefaultLayoutHome.css">
+	<script src="/public/switchStyle.js"></script>
 
 </head>
 <body>
@@ -65,8 +65,13 @@
 <div class="container">
 
 <div class="box box-1">
-    <h2>Upload</h2>
-	<p>	Upload stuff I need to do this latr drag n drop as well??
+    <h2>New Workspace</h2>
+	<p>	Upload stuff I need to do this latr drag n drop as well?? </br> Name Workspace </br> choose language </br> GitHub
+    </br> <form>
+		<label for="fileInput">Select files:</label>
+		<input type="file" id="fileInput" name="files[]" multiple webkitdirectory directory>
+		<input type="submit" value="Upload">
+	</form>
     </p>
 </div>
 
