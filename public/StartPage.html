@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Home Page for Registered Users of the Webitor.">
     <title>Webitor Home</title>
-    <link rel="stylesheet" href="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\goingForPageLazout.css">
+    <link id="style-link" rel="stylesheet" type="text/css" href="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\goingForPageLazout.css">
+	<script src="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\switchStyle.js"></script>
 
 </head>
 <body>
@@ -19,7 +20,7 @@
             <nav class="nav">
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a class="button" href="">GitHub Repo</a>
+                        <a class="button" href="https://github.com/DHBW-Vilas/21ai1-webeng-II-webitor.git">GitHub Repo</a>
                     </li>
                 </ul>
             </nav>
@@ -86,10 +87,10 @@
             <div class="footer">
            
                     <ul>
-                        <button onclick="switchStyle('pageLayout.css')">Default</button>
-                        <button onclick="switchStyle('pageLayoutLight.css')">Light Mode</button>
-						<button onclick="switchStyle('pageLayout.css')">High Contrast Mode</button>
-                        <button onclick="switchStyle('pageLayoutLight.css')">Spooky Mode</button>
+                        <button onclick="switchStyle('DefaultLayoutHome.css')">Default</button>
+                        <button onclick="switchStyle('HomeLight.css')">Light Mode</button>
+						<button onclick="switchStyle('HomeContrast.css')">High Contrast Mode</button>
+                        <button onclick="switchStyle('HomeSpooky.css')">Spooky Mode</button>
                     </ul>
 
             </div>
