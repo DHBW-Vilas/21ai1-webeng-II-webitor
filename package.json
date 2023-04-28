@@ -28,5 +28,13 @@
 	},
 	"devDependencies": {
 		"nodemon": "^2.0.22"
+	},
+	"nodemonConfig": {
+		"verbose": false,
+		"ignore": [
+			"public/**",
+			".vscode/**",
+			"tmp/**"
+		]
 	}
 }

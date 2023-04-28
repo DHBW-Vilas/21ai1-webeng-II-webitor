@@ -44,20 +44,26 @@ app.use('/public', express.static(publicPath));
 app.use(express.json());
 app.use(cookieParser(ENV.SECRET));
 
-// req.userId holds the user ID or an error is raised
-function forceAuth(req, res, next) {
+function checkAuth(req, res) {
 	const authTok = req.signedCookies['auth'];
 	req.userId = AUTH_TOKS[authTok] ?? null;
-	if (!AUTH_TOKS[authTok]) next(new Error('Unauthenticated'));
-	else {
+	if (AUTH_TOKS[authTok]) {
+		req.userId = AUTH_TOKS[authTok];
 		res.cookie('url', '');
-		next();
+		return true;
+	} else {
+		return false;
 	}
+}
+
+// req.userId holds the user ID or an error is raised
+function forceAuth(req, res, next) {
+	if (checkAuth(req, res)) next();
+	else next(new Error('Unauthenticated'));
 }
 
 // If
 function authErr(err, req, res, next) {
-	console.log({ id: req.userId });
 	if (req.userId === null) {
 		res.cookie('url', req.originalUrl).redirect('/login');
 	} else {
@@ -65,10 +71,26 @@ function authErr(err, req, res, next) {
 	}
 }
 
+/**
+ *
+ * @param {String} fileOnAuth The File to respond with if the user is authenticated
+ * @param {String} fileOnErr The File to respond with if the user isn't authenticated
+ * @param {Boolean} inPublicDir Whether the files are assumed to be in the public directory.
+ * @returns
+ */
+function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
+	if (inPublicDir) {
+		fileOnAuth = path.join(publicPath, fileOnAuth);
+		fileOnErr = path.join(publicPath, fileOnErr);
+	}
+	return (req, res) => {
+		if (checkAuth(req, res)) res.sendFile(fileOnAuth);
+		else res.sendFile(fileOnErr);
+	};
+}
+
 // Set up Routing
-app.get('/', (req, res) => {
-	res.send('Test');
-})
+app.get('/', simpleAuthCheck('CodeMirror.html', 'StartPage.html'))
 	.get('/login', (req, res) => {
 		res.sendFile(path.join(publicPath, 'login.html'));
 	})
