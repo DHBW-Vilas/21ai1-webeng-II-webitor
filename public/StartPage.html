@@ -6,13 +6,12 @@
     <meta name="description" content="Home Page for Registered Users of the Webitor.">
     <title>Webitor Home</title>
     <link id="style-link" rel="stylesheet" type="text/css" href="/public/DefaultLayoutHome.css">
-	<script src="/public/switchStyle.js"></script>
-    <script src="/public/UploadFilesHome.js"></script>
-    <script src="/public/newWorkspaceCreated.js"></script>
+	<script src="/public/switchStyle.js" defer></script>
+    <script src="/public/UploadFilesHome.js" defer></script>
+    <script src="/public/newWorkspaceCreated.js" defer></script>
 
 </head>
 <body>
-
 <div id="layout" class="g">
     <div class="sidebar">
         <div class="header">
@@ -30,85 +29,73 @@
     </div>
 
     <div class="content">
-        <div>
-            <!-- wrapper -->
-            <div class="posts">
+        <!-- wrapper -->
+        <div class="posts">
+            <section class="post">
+                <header class="post-header">
+                    <h2 class="post-title">Welcome to Webitor</h2>
+                </header>
 
-                <section class="post">
-                    <header class="post-header">
+                <div class="post-description">
+                    <p>
+                        Welcome to Webitor - Your online Coding Playground. </br> This is your coding environment which allows you to create workspaces, upload and work on local projects as well as connect your Github Account. </br> The Editor supports the following languages: JavaScript, HTML, CSS, PHP, Python, SQL, C# and Java.
+                    </p>
+                </div>
+            </section>
 
+            <section class="post">
+                <header class="post-header">
+                    <h2 class="post-title">Your Playground</h2>
+                </header>
+            </section>
+        </div>
 
-                        <h2 class="post-title">Welcome to Webitor</h2>
+        <div class="container">
+            <div class="box box-1">
+                <h2>New Workspace</h2>
+                <p> Name Workspace </br>
+                    Choose language </br>
+                    GitHub </br>
 
-                    </header>
+                    <label for="menu">Programming Language:</label>
+                    <select id="menu" name="menu">
+                        <option value="option1">Java</option>
+                        <option value="option2">Python</option>
+                        <option value="option3">C#</option>
+                        <option value="option4">JavaScript</option>
+                        <option value="option5">CSS</option>
+                        <option value="option6">PHP</option>
+                        <option value="option7">SQL</option>
+                    </select>
+                    </br>
 
-                    <div class="post-description">
-                        <p>
-                            Welcome to Webitor - Your online Coding Playground. </br> This is your coding environment which allows you to create workspaces, upload and work on local projects as well as connect your Github Account. </br> The Editor supports the following languages: JavaScript, HTML, CSS, PHP, Python, SQL, C# and Java.
-                        </p>
+                    <div id="drop-area">
+                        <label for="fileInput">Select files:</label>
+                        <input type="file" id="fileInput" name="files[]" multiple webkitdirectory directory>
+                        <span>or drag and drop files here</span>
                     </div>
-                </section>
-            </div>
-                    </header>
 
-
-                </section>
-
-                <section class="post">
-                    <header class="post-header">
-
-                        <h2 class="post-title">Your Playground</h2>
-
-                    </header>
-
-
-
-
-<div class="container">
-
-<div class="box box-1">
-    <h2>New Workspace</h2>
-	<p> Name Workspace </br> choose language </br> GitHub
-    </br> <label for="menu">Programming Language:</label>
-    <select id="menu" name="menu">
-      <option value="option1">Java</option>
-      <option value="option2">Python</option>
-      <option value="option3">C#</option>
-      <option value="option4">JavaScript</option>
-      <option value="option5">CSS</option>
-      <option value="option6">PHP</option>
-      <option value="option7">SQL</option>
-    </select> </br><div id="drop-area">
-        <label for="fileInput">Select files:</label>
-        <input type="file" id="fileInput" name="files[]" multiple webkitdirectory directory>
-        <span>or drag and drop files here</span>
-      </div>
-    </br> <button onclick="CreateWorkspace()">Create Workspace</button>
-    </p>
-</div>
-
-
- <div class="box box-2">
-    <h2>Your Workspaces</h2>	
-    <p>Enter ur Code here idk man</p>
- </div>
-
-</div> 
-                </section>
+                    </br>
+                    <button onclick="CreateWorkspace()">Create Workspace</button>
+                </p>
             </div>
 
-            <div class="footer">
-           
-                    <ul>
-                        <button onclick="switchStyle('DefaultLayoutHome.css')">Default</button>
-                        <button onclick="switchStyle('HomeLight.css')">Light Mode</button>
-						<button onclick="switchStyle('HomeContrast.css')">High Contrast Mode</button>
-                        <button onclick="switchStyle('HomeSpooky.css')">Spooky Mode</button>
-                    </ul>
 
+            <div class="box box-2">
+                <h2>Your Workspaces</h2>
+                <p>Enter ur Code here idk man</p>
             </div>
         </div>
     </div>
+</div>
 
+<div class="footer">
+    <ul>
+        <button onclick="switchStyle('DefaultLayoutHome.css')">Default</button>
+        <button onclick="switchStyle('HomeLight.css')">Light Mode</button>
+        <button onclick="switchStyle('HomeContrast.css')">High Contrast Mode</button>
+        <button onclick="switchStyle('HomeSpooky.css')">Spooky Mode</button>
+    </ul>
+</div>
 </body>
 </html>
