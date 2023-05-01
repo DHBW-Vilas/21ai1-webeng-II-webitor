@@ -1,5 +1,22 @@
-/*General Style shit*/
+/*SPOOKY SHIT*/
 
+
+
+
+
+
+
+
+
+/*General Style shit*/
+  /* This CSS applies to the entire page */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-Color:#111;
+  }
+  
 .container {
     display: grid;
     grid-gap: 10px;
@@ -81,7 +98,7 @@
   
   .content-subhead {
       text-transform: uppercase;
-      color: #aaa;
+      color: #fff;
       border-bottom: 1px solid #eee;
       padding: 0.4em 0;
       font-size: 80%;
@@ -98,40 +115,15 @@
   }
   .post-title {
       font-size: 2em;
-      color: #222;
+      color: #fff;
       margin-bottom: 0.2em;
   }
   
   .post-description {
       font-family: Georgia, "Cambria", serif;
-      color: #444;
+      color: #fff;
       line-height: 1.8em;
   }
-  .post-meta {
-      color: #999;
-      font-size: 90%;
-      margin: 0;
-  }
-  
-  .post-category {
-      margin: 0 0.1em;
-      padding: 0.3em 1em;
-      color: #fff;
-      background: #999;
-      font-size: 80%;
-  }
-      .post-category-design {
-          background: #5aba59;
-      }
-      .post-category-pure {
-          background: #4d85d1;
-      }
-      .post-category-yui {
-          background: #8156a7;
-      }
-      .post-category-js {
-          background: #df2d4f;
-      }
   
   .post-image-meta {
       margin-top: -3.5em;
