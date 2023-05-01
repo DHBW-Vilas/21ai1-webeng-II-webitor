@@ -3,16 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>CodeMirror HTML Page</title>
-    <link rel="stylesheet" href="/public/EditorStyleDefault.css" />
+    <link id="style-link" rel="stylesheet" type="text/css" href="/public/EditorLayout/EditorStyleDefault.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+	<script src="/public/switchStyle.js" defer></script>
 </head>
 <body>
 	<div class="container">
 
 		<header>
-		  <h1>Header</h1>
-		</header>
+			<ul>
+							<button onclick="switchStyle('goingForPageLazout.css')">Default</button>
+							<button onclick="switchStyle('pageLayoutLight.css')">Light Mode</button>
+							<button onclick="switchStyle('pageLayoutContrast.css')">High Contrast Mode</button>
+							<button onclick="switchStyle('pageLayout.css')">Spooky Mode</button>
+						</ul>
+		  </header>
 
   <div class="box box-1">
 	  <h2>File Explorer</h2>
