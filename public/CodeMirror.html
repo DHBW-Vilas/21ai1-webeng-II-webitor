@@ -13,7 +13,7 @@
 		<header>
 		  <h1>Header</h1>
 		</header>
-		
+
   <div class="box box-1">
 	  <h2>File Explorer</h2>
 	  <p>	<div id="file-explorer">
@@ -28,7 +28,7 @@
 	  </li>
 	</ul>
   </div>
-  
+
   <script>
   var fileExplorer = document.getElementById("file-explorer");
   fileExplorer.addEventListener("click", function(e) {
@@ -44,10 +44,10 @@
   </script>
   </p>
   </div>
-  
-  
+
+
    <div class="box box-2">
-	  <h2>Code Editor</h2>	
+	  <h2>Code Editor</h2>
 	  <p><textarea id="editor"></textarea>
 	  <script>
 		  var myEditor = CodeMirror.fromTextArea(document.getElementById("editor"), {
@@ -57,14 +57,15 @@
 		  });
 	  </script></p>
 	  </div>
-	  
+
 		<div class="box box-3">
 	  <h2>Console</h2>
 	  <p>This one will only exist if we can run code or shell commands.</p>
+	  <!-- TODO: Add iframe -->
 	</div>
-  
-   
+
+
   </div>
-	
+
 </body>
 </html>
