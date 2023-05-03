@@ -18,44 +18,44 @@
   }
   
 .container {
-	display: grid;
-	grid-gap: 10px;
-	grid-template-columns: 1fr 2fr;
-	padding: 20px;
-	height: 50vh;
-}
-
-/* Style the header and footer */
-
-.box {
-	color: #fff;
-	background-color: #111;
-	padding: 20px;
-	border-radius: 20px;
-}
-
-/* Style the individual container items */
-.box-1 {
-	text-align: center;
-	margin-top: 0;
-	border: 2px solid rgb(145, 0, 0);
-}
-
-.box-2 {
-	margin-bottom: 0;
-	border: 2px solid rgb(145, 0, 0);
-}
-
-.header {
-	text-align: center;
-	top: auto;
-	margin: 3em auto;
-}
-
-.sidebar {
-	background: rgb(145, 0, 0);
-	color: #fff;
-}
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: 1fr 2fr;
+    padding: 20px;
+    height: 50vh;
+  }
+  
+  /* Style the header and footer */
+  
+    .box {
+    color:  #fff;
+    background-Color: #111;
+    padding: 20px;
+    border-radius: 20px;
+    }
+    
+  /* Style the individual container items */
+  .box-1 {
+          text-align: center;
+      margin-top: 0;
+      border: 2px solid rgb(145, 0, 0);
+     }
+  
+  .box-2 {
+     margin-bottom: 0;
+     border: 2px solid rgb(145, 0, 0);
+     }
+  
+  .header {
+      text-align: center;
+      top: auto;
+      margin: 3em auto;
+  }
+  
+  .sidebar {
+      background: rgb(145, 0, 0);
+      color: #fff;
+  }
 
 /*Detail style choices*/
   
@@ -98,7 +98,7 @@
   
   .content-subhead {
       text-transform: uppercase;
-      color: #aaa;
+      color: #fff;
       border-bottom: 1px solid #eee;
       padding: 0.4em 0;
       font-size: 80%;
@@ -115,40 +115,15 @@
   }
   .post-title {
       font-size: 2em;
-      color: #222;
+      color: #fff;
       margin-bottom: 0.2em;
   }
   
   .post-description {
       font-family: Georgia, "Cambria", serif;
-      color: #444;
+      color: #fff;
       line-height: 1.8em;
   }
-  .post-meta {
-      color: #999;
-      font-size: 90%;
-      margin: 0;
-  }
-  
-  .post-category {
-      margin: 0 0.1em;
-      padding: 0.3em 1em;
-      color: #fff;
-      background: #999;
-      font-size: 80%;
-  }
-      .post-category-design {
-          background: #5aba59;
-      }
-      .post-category-pure {
-          background: #4d85d1;
-      }
-      .post-category-yui {
-          background: #8156a7;
-      }
-      .post-category-js {
-          background: #df2d4f;
-      }
   
   .post-image-meta {
       margin-top: -3.5em;
@@ -193,45 +168,45 @@
 
 /*Shit in Box 1*/
 
-/*per Drag and Drop and Selection*/
-#drop-area {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	border: 2px dashed rgb(145, 0, 0);
-	padding: 2rem;
-	margin-top: 2rem;
-}
-
-#drop-area.highlight {
-	background-color: rgb(145, 0, 0);
-}
-
-#drop-area span {
-	font-size: 1.2rem;
-	font-weight: bold;
-	color: rgb(145, 0, 0);
-	margin-top: 1rem;
-}
-
-/*Dropdown for Programming Language*/
-select {
-	padding: 10px;
-	border: 1px solid #ccc;
-	border-radius: 5px;
-	font-size: 16px;
-	color: #555;
-}
-
-option {
-	background-color: #f8f8f8;
-	color: #555;
-	font-size: 16px;
-}
-
-select:focus {
-	outline: none;
-	border-color: #66afe9;
-	box-shadow: 0 0 5px #66afe9;
-}
+    /*per Drag and Drop and Selection*/
+        #drop-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgb(145, 0, 0);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+  
+        #drop-area.highlight {
+            background-color: rgb(145, 0, 0);
+        }
+  
+        #drop-area span {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: rgb(145, 0, 0);
+            margin-top: 1rem;
+        }
+ 
+    /*Dropdown for Programming Language*/
+        select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #555;
+        }
+      
+      option {
+        background-color: #f8f8f8;
+        color: #555;
+        font-size: 16px;
+      }
+      
+      select:focus {
+        outline: none;
+        border-color: #66afe9;
+        box-shadow: 0 0 5px #66afe9;
+      }
