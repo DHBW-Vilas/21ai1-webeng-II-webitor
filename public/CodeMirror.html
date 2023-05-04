@@ -20,33 +20,24 @@
 						</ul>
 		  </header>
 
-  <div class="box box-1">
-	  <h2>File Explorer</h2>
-	  <p>	<div id="file-explorer">
-	<ul>
-	  <li>File 1</li>
-	  <li>File 2</li>
-	  <li>Directory 1
-		<ul>
-		  <li>File 3</li>
-		  <li>File 4</li>
-		</ul>
-	  </li>
-	</ul>
-  </div>
+		  <div class="box box-1">
+			<h2>File Explorer</h2>
+			<iframe src="/udData" width="100%" height="500px"></iframe>
+			<p>
+		
+		<script>
+		var fileExplorer = document.getElementById("file-explorer");
+		fileExplorer.addEventListener("click", function(e) {
+		  if (e.target.nodeName === "LI") {
+			var fileName = e.target.textContent;
+			var fileContents = getFileContents(fileName);
+			editor.setValue(fileContents);
+		  }
+		});
+		function getFileContents(fileName) {
+		  // make an AJAX call or fetch request to the server to load the file contents
+		}
 
-  <script>
-  var fileExplorer = document.getElementById("file-explorer");
-  fileExplorer.addEventListener("click", function(e) {
-	if (e.target.nodeName === "LI") {
-	  var fileName = e.target.textContent;
-	  var fileContents = getFileContents(fileName);
-	  editor.setValue(fileContents);
-	}
-  });
-  function getFileContents(fileName) {
-	// make an AJAX call or fetch request to the server to load the file contents
-  }
   </script>
   </p>
   </div>
