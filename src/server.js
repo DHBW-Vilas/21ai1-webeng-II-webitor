@@ -131,7 +131,7 @@ app.get('/', (req, res) => {
 
 		const authTok = genAuthTok();
 		AUTH_TOKS[authTok] = user._id;
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).status(200).json({ success: true, url: newURL });
+		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true }).status(200).json({ success: true, url: newURL });
 	})
 	.get('/workspaces', async (req, res) => {
 		if (checkAuth(req, res)) {
@@ -144,7 +144,7 @@ app.get('/', (req, res) => {
 			res.send({ success: false, workspaces: [], err: 'Not authenticated' });
 		}
 	})
-	.post('/new/:projectName', [forceAuth, authErr], async (req, res) => {
+	.post('/new/:projectName', async (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
@@ -154,36 +154,50 @@ app.get('/', (req, res) => {
 		// It seems especially unimportant if we can start using the files on the client
 		// before the server has responded.
 
-		const projectName = req.params.projectName;
-		const form = formidable({
-			keepExtensions: true,
-			multiples: true,
-			filter: ({ name, originalFilename, mimetype }) => {
-				// TODO: Filter certain ignored files
-				// For example: filter all files in a .git folder
+		if (checkAuth(req, res)) {
+			const projectName = req.params.projectName;
+			const form = formidable({
+				keepExtensions: true,
+				multiples: true,
+				filter: ({ name, originalFilename, mimetype }) => {
+					// TODO: Filter certain ignored files
+					// For example: filter all files in a .git folder
 
-				return true; // no filter yet
-			},
-			uploadDir: tmpDir,
-		});
-		form.parse(req, async (err, fields, files) => {
-			if (err) throw err;
+					return true; // no filter yet
+				},
+				uploadDir: tmpDir,
+			});
+			form.parse(req, async (err, fields, files) => {
+				if (err) throw err;
 
-			let fileIDs = [];
-			for await (const f of files.file) {
-				const fileBuffer = await fs.readFile(f.filepath);
-				const doc = await Models.file.create({ path: f.originalFilename, file: fileBuffer });
-				fileIDs.push(doc._id);
-				fs.rm(f.filepath);
-			}
+				let fileIDs = [];
+				for await (const f of files.file) {
+					const fileBuffer = await fs.readFile(f.filepath);
+					const doc = await Models.file.create({ path: f.originalFilename, file: fileBuffer });
+					fileIDs.push(doc._id);
+					fs.rm(f.filepath);
+				}
 
-			const doc = await Models.project.create({ name: projectName, files: fileIDs, editors: [req.userId] });
-			console.log(doc.toObject());
-			res.json({ id: doc._id });
-		});
+				const doc = await Models.project.create({ name: projectName, files: fileIDs, editors: [req.userId] });
+				await Models.user.updateOne({ _id: req.userId }, { $push: { projects: doc._id } });
+				// const user = await Models.user.findById(req.userId);
+				// console.log({ user });
+				// console.log({ workspace: doc });
+				res.json({ id: doc._id });
+			});
+		} else {
+			res.json({ success: false, err: 'Not Authenticated', id: null });
+		}
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
-		Models.project.findById(req.params.workspaceId);
+		if (checkAuth(req, res)) {
+			const workspace = await Models.project.findById(req.params.workspaceId);
+			console.log({ workspace });
+		}
+		// TODO: Change structure of workspace to directory tree
+		else {
+			res.json({ success: false, err: 'Not Authenticated', root: {} });
+		}
 	})
 	.put('/workspace/:workspaceId/:fileId') // New File Content in body
 	.delete('/workspace/:workspaceId/:fileId') // File is deleted

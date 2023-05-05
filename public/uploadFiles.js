@@ -1,4 +1,5 @@
 const fileInput = document.getElementById('fileInput');
+const nameInput = document.getElementById('nameInput');
 
 fileInput.addEventListener('change', handleFiles, false);
 
@@ -12,7 +13,13 @@ function handleFiles() {
 		fd.append('file', file, file.webkitRelativePath);
 	});
 
-	fetch('/new/' + 'testProject1', {
+	if (!nameInput.value) {
+		// TODO: Show the error to the user or maybe use some default name??
+		console.log('ERROR: No Workspace name entered');
+		return;
+	}
+
+	fetch('/new/' + nameInput.value, {
 		method: 'POST',
 		body: fd,
 	})
