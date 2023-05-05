@@ -25,6 +25,8 @@ if (workspaceId === null) {
 fetch('/workspace/' + workspaceId)
 	.then((res) => res.json())
 	.then((res) => {
+		// TODO: Error Handling
+		console.log(res);
 		const root = res.root;
 		addDirEl(fileExplorerEl, root);
 	})
