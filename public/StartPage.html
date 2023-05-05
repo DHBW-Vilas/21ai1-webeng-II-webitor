@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Home Page for Registered Users of the Webitor.">
     <title>Webitor Home</title>
-    <link id="style-link" rel="stylesheet" type="text/css" href="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\goingForPageLazout.css">
-	<script src="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\switchStyle.js"></script>
-	<script src="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\UploadFiles.js"></script>
-	<script src="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\newWorkspace.js"></script>
+    <link id="style-link" rel="stylesheet" type="text/css" href="/public/HomeLayout/DefaultLayoutHome.css">
+	<script src="/public/switchStyle.js" defer></script>
+	<script src="/public/uploadFiles.js" defer></script>
+	<script src="/public/newWorkspace.js" defer></script>
+    <script src="/public/getWorkspaces.js" defer></script>
 
 </head>
 <body class="default">
@@ -94,7 +95,7 @@
 
  <div class="box box-2">
     <h2>Your Workspaces</h2>
-    <p>Enter ur Code here idk man</p>
+    <div id="workspaces"></div>
  </div>
 
 </div>
@@ -108,10 +109,10 @@
             <div class="footer">
 
                     <ul>
-                        <button onclick="switchStyle('goingForPageLazout.css')">Default</button>
-                        <button onclick="switchStyle('pageLayoutLight.css')">Light Mode</button>
-						<button onclick="switchStyle('pageLayoutContrast.css')">High Contrast Mode</button>
-                        <button onclick="switchStyle('pageLayout.css')">Spooky Mode</button>
+                        <button onclick="switchStyle('default')">Default</button>
+                        <button onclick="switchStyle('light')">Light Mode</button>
+						<button onclick="switchStyle('contrast')">High Contrast Mode</button>
+                        <button onclick="switchStyle('spooky')">Spooky Mode</button>
                     </ul>
 
             </div>

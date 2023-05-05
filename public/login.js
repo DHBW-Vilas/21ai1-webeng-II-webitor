@@ -20,13 +20,15 @@ function authenticate(isLogin) {
 			body: JSON.stringify({ name, pass }),
 			mode: 'cors',
 			headers: { 'Content-Type': 'application/json' },
-		}).then((res) => {
-			if (res.redirected) document.location.href = res.url;
-			else
-				res.json().then((obj) => {
-					console.log(obj);
-				});
-		});
+		})
+			.then((res) => res.json())
+			.then((res) => {
+				if (res.success) document.location.href = res.url;
+				else {
+					// TODO: Error Handling
+					console.log(res);
+				}
+			});
 	} else {
 		// TODO: Error Handling
 	}

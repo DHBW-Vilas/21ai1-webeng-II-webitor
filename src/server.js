@@ -90,7 +90,12 @@ function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
 }
 
 // Set up Routing
-app.get('/', simpleAuthCheck('CodeMirror.html', 'StartPage.html'))
+app.get('/', (req, res) => {
+	res.sendFile(path.join(publicPath, 'StartPage.html'));
+})
+	.get('/editor', (req, res) => {
+		res.sendFile(path.join(publicPath, 'CodeMirror.html'));
+	})
 	.get('/login', (req, res) => {
 		res.sendFile(path.join(publicPath, 'login.html'));
 	})
@@ -113,6 +118,8 @@ app.get('/', simpleAuthCheck('CodeMirror.html', 'StartPage.html'))
 		let name = req.body.name || null;
 		let pass = req.body.pass || null;
 
+		const newURL = req.cookies['url'] || '/';
+		res.clearCookie('url');
 		if (!name || !pass) return res.status(418).json({ err: 'Invalid Username or Password.' });
 		if (Buffer.from(pass).byteLength > 72) return res.status(418).json({ err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
 
@@ -120,18 +127,22 @@ app.get('/', simpleAuthCheck('CodeMirror.html', 'StartPage.html'))
 		if (!user) return res.status(418).json({ err: 'Wrong username.' });
 		console.log({ user: user });
 		const cmpRes = await bcrypt.compare(pass, user.pass);
-		if (!cmpRes) res.status(418).json({ err: 'Wrong password.' });
+		if (!cmpRes) return res.status(418).json({ err: 'Wrong password.' });
 
 		const authTok = genAuthTok();
 		AUTH_TOKS[authTok] = user._id;
-		const newURL = req.cookies['url'] || '/';
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).redirect(newURL);
+		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).status(200).json({ success: true, url: newURL });
 	})
-	.get('/projects', [forceAuth, authErr], async (req, res) => {
-		const user = await Models.user.findById(req.userId);
-		const projects = [];
-		for await (const projectId of user.projects) projects.push(await Models.project.findById(projectId));
-		return res.send({ projects });
+	.get('/workspaces', async (req, res) => {
+		if (checkAuth(req, res)) {
+			const user = await Models.user.findById(req.userId);
+			const projects = [];
+			for await (const projectId of user.projects) projects.push(await Models.project.findById(projectId));
+			console.log({ projects });
+			return res.send({ success: true, workspaces: projects });
+		} else {
+			res.send({ success: false, workspaces: [], err: 'Not authenticated' });
+		}
 	})
 	.post('/new/:projectName', [forceAuth, authErr], async (req, res) => {
 		// @performance
@@ -144,7 +155,17 @@ app.get('/', simpleAuthCheck('CodeMirror.html', 'StartPage.html'))
 		// before the server has responded.
 
 		const projectName = req.params.projectName;
-		const form = formidable({ keepExtensions: true, multiples: true, filter: filterFiles, uploadDir: tmpDir });
+		const form = formidable({
+			keepExtensions: true,
+			multiples: true,
+			filter: ({ name, originalFilename, mimetype }) => {
+				// TODO: Filter certain ignored files
+				// For example: filter all files in a .git folder
+
+				return true; // no filter yet
+			},
+			uploadDir: tmpDir,
+		});
 		form.parse(req, async (err, fields, files) => {
 			if (err) throw err;
 
@@ -158,16 +179,16 @@ app.get('/', simpleAuthCheck('CodeMirror.html', 'StartPage.html'))
 
 			const doc = await Models.project.create({ name: projectName, files: fileIDs, editors: [req.userId] });
 			console.log(doc.toObject());
-			res.json({ project: doc.toObject() });
+			res.json({ id: doc._id });
 		});
-	});
-
-function filterFiles({ name, originalFilename, mimetype }) {
-	// TODO: Filter certain ignored files
-	// For example: filter all files in a .git folder
-
-	return true; // no filter yet
-}
+	})
+	.get('/workspace/:workspaceId', async (req, res) => {
+		Models.project.findById(req.params.workspaceId);
+	})
+	.put('/workspace/:workspaceId/:fileId') // New File Content in body
+	.delete('/workspace/:workspaceId/:fileId') // File is deleted
+	.post('/workspace/file/:workspaceId') // Body contains path for new file
+	.post('/workspace/dir/:workspaceId'); // Body contains path for new directory
 
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));
