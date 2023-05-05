@@ -31,13 +31,13 @@ function genAuthTok(size = 30) {
 }
 
 // Connect to MongoDB && load required Mongo-Schemas
+const Models = require('./models.js');
 async function connectDB() {
 	const mongoURI = `mongodb+srv://${ENV.DB_USER}:${ENV.DB_PASS}@cluster0.91saw3c.mongodb.net/?retryWrites=true&w=majority`;
 	const db = await mongoose.connect(mongoURI);
 	console.log(`MongoDB connected: ${db.connection.host}`);
 }
 connectDB();
-const Models = require('./models.js');
 
 // Load middleware for Express Framework
 app.use('/public', express.static(publicPath));
@@ -103,16 +103,25 @@ app.get('/', (req, res) => {
 		let name = req.body.name || null;
 		let pass = req.body.pass || null;
 
-		if (!name || !pass) return res.status(418).json({ err: 'Invalid Username or Password.' });
-		if (Buffer.from(pass).byteLength > 72) return res.status(418).json({ err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
-		if ((await Models.user.exists({ name })) != null) return res.status(418).json({ err: 'Username is already taken' });
+		const newURL = req.cookies['url'] || '/';
+		res.clearCookie('url');
+
+		if (!name || !pass) {
+			return res.status(418).json({ success: false, err: 'Invalid Username or Password.' });
+		}
+		if (Buffer.from(pass).byteLength > 72) {
+			return res.status(418).json({ success: false, err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
+		}
+		if ((await Models.user.exists({ name })) != null) {
+			return res.status(418).json({ success: false, err: 'Username is already taken' });
+		}
 
 		const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
-		const newUser = await Models.user.create({ name, pass: hashedPass, projects: [] });
+		const newUser = await Models.user.create({ name, pass: hashedPass, workspaces: [] });
+
 		const authTok = genAuthTok();
 		AUTH_TOKS[authTok] = newUser._id;
-		const newURL = req.cookies['url'] || '/';
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax' }).redirect(newURL);
+		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).status(200).json({ success: true, url: newURL });
 	})
 	.post('/login', async (req, res) => {
 		let name = req.body.name || null;
@@ -120,14 +129,22 @@ app.get('/', (req, res) => {
 
 		const newURL = req.cookies['url'] || '/';
 		res.clearCookie('url');
-		if (!name || !pass) return res.status(418).json({ err: 'Invalid Username or Password.' });
-		if (Buffer.from(pass).byteLength > 72) return res.status(418).json({ err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
+
+		if (!name || !pass) {
+			return res.status(418).json({ success: false, err: 'Invalid Username or Password.', url: null });
+		}
+		if (Buffer.from(pass).byteLength > 72) {
+			return res.status(418).json({ success: false, err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).', url: null });
+		}
 
 		const user = await Models.user.findOne({ name });
-		if (!user) return res.status(418).json({ err: 'Wrong username.' });
-		console.log({ user: user });
+		if (!user) {
+			return res.status(418).json({ err: 'Wrong username.', success: false, url: null });
+		}
 		const cmpRes = await bcrypt.compare(pass, user.pass);
-		if (!cmpRes) return res.status(418).json({ err: 'Wrong password.' });
+		if (!cmpRes) {
+			return res.status(418).json({ err: 'Wrong password.', success: false, url: null });
+		}
 
 		const authTok = genAuthTok();
 		AUTH_TOKS[authTok] = user._id;
@@ -136,15 +153,14 @@ app.get('/', (req, res) => {
 	.get('/workspaces', async (req, res) => {
 		if (checkAuth(req, res)) {
 			const user = await Models.user.findById(req.userId);
-			const projects = [];
-			for await (const projectId of user.projects) projects.push(await Models.project.findById(projectId));
-			console.log({ projects });
-			return res.send({ success: true, workspaces: projects });
+			const workspaces = [];
+			for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
+			return res.json({ success: true, workspaces });
 		} else {
-			res.send({ success: false, workspaces: [], err: 'Not authenticated' });
+			res.json({ success: false, workspaces: [], err: 'Not authenticated' });
 		}
 	})
-	.post('/new/:projectName', async (req, res) => {
+	.post('/new/:workspaceName', async (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
@@ -155,35 +171,47 @@ app.get('/', (req, res) => {
 		// before the server has responded.
 
 		if (checkAuth(req, res)) {
-			const projectName = req.params.projectName;
+			const workspaceName = req.params.workspaceName;
 			const form = formidable({
 				keepExtensions: true,
 				multiples: true,
 				filter: ({ name, originalFilename, mimetype }) => {
 					// TODO: Filter certain ignored files
 					// For example: filter all files in a .git folder
-
 					return true; // no filter yet
 				},
 				uploadDir: tmpDir,
 			});
 			form.parse(req, async (err, fields, files) => {
+				// TODO: Better error handling
 				if (err) throw err;
 
-				let fileIDs = [];
+				const root = { name: workspaceName, files: [], dirs: {} };
 				for await (const f of files.file) {
-					const fileBuffer = await fs.readFile(f.filepath);
-					const doc = await Models.file.create({ path: f.originalFilename, file: fileBuffer });
-					fileIDs.push(doc._id);
-					fs.rm(f.filepath);
+					const pathParts = f.originalFilename.split('/');
+					const file = { name: pathParts.pop(), file: await fs.readFile(f.filepath) };
+					fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
+
+					let parentDir = root;
+					for (const dname of pathParts) {
+						if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {} };
+						parentDir = parentDir.dirs[dname];
+					}
+					parentDir.files.push(file);
 				}
 
-				const doc = await Models.project.create({ name: projectName, files: fileIDs, editors: [req.userId] });
-				await Models.user.updateOne({ _id: req.userId }, { $push: { projects: doc._id } });
-				// const user = await Models.user.findById(req.userId);
-				// console.log({ user });
-				// console.log({ workspace: doc });
-				res.json({ id: doc._id });
+				const flattenDir = (dir) => {
+					let subdirIds = Object.values(dir.dirs).map((d) => flattenDir(d));
+					dir.dirs = subdirIds;
+					return dir;
+				};
+				flattenDir(root);
+
+				const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [req.userId] });
+				await Models.user.updateOne({ _id: req.userId }, { $push: { workspaces: workspaceDoc._id } });
+				const user = await Models.user.findById(req.userId);
+				console.log({ user });
+				res.json({ success: true, id: workspaceDoc._id });
 			});
 		} else {
 			res.json({ success: false, err: 'Not Authenticated', id: null });
@@ -191,11 +219,9 @@ app.get('/', (req, res) => {
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
 		if (checkAuth(req, res)) {
-			const workspace = await Models.project.findById(req.params.workspaceId);
-			console.log({ workspace });
-		}
-		// TODO: Change structure of workspace to directory tree
-		else {
+			const workspace = await Models.workspace.findById(req.params.workspaceId);
+			res.json({ success: true, root: workspace });
+		} else {
 			res.json({ success: false, err: 'Not Authenticated', root: {} });
 		}
 	})
