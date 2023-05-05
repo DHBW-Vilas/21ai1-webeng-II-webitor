@@ -1,5 +1,5 @@
 const fileInput = document.getElementById('fileInput');
-const nameInput = document.getElementById('nameInput');
+const nameInput = document.getElementById('name');
 
 fileInput.addEventListener('change', handleFiles, false);
 
