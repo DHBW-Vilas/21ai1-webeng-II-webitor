@@ -62,13 +62,22 @@ function forceAuth(req, res, next) {
 	else next(new Error('Unauthenticated'));
 }
 
-// If
-function authErr(err, req, res, next) {
+function authErrRedirect(err, req, res, next) {
 	if (req.userId === null) {
 		res.cookie('url', req.originalUrl).redirect('/login');
 	} else {
 		next(err);
 	}
+}
+
+function authErrJSON(obj = {}) {
+	return (err, req, res, next) => {
+		if (req.userId === null) {
+			res.status(404).json({ ...obj, ...{ success: false, err: 'Not Authenticated' } });
+		} else {
+			next(err);
+		}
+	};
 }
 
 /**
@@ -150,17 +159,13 @@ app.get('/', (req, res) => {
 		AUTH_TOKS[authTok] = user._id;
 		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true }).status(200).json({ success: true, url: newURL });
 	})
-	.get('/workspaces', async (req, res) => {
-		if (checkAuth(req, res)) {
-			const user = await Models.user.findById(req.userId);
-			const workspaces = [];
-			for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
-			return res.json({ success: true, workspaces });
-		} else {
-			res.json({ success: false, workspaces: [], err: 'Not authenticated' });
-		}
+	.get('/workspaces', [forceAuth, authErrJSON({ workspaces: [] })], async (req, res) => {
+		const user = await Models.user.findById(req.userId);
+		const workspaces = [];
+		for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
+		return res.json({ success: true, workspaces });
 	})
-	.post('/new/:workspaceName', async (req, res) => {
+	.post('/new/:workspaceName', [forceAuth, authErrJSON()], async (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
@@ -170,65 +175,57 @@ app.get('/', (req, res) => {
 		// It seems especially unimportant if we can start using the files on the client
 		// before the server has responded.
 
-		if (checkAuth(req, res)) {
-			const workspaceName = req.params.workspaceName;
-			const form = formidable({
-				keepExtensions: true,
-				multiples: true,
-				filter: ({ name, originalFilename, mimetype }) => {
-					// TODO: Filter certain ignored files
-					// For example: filter all files in a .git folder
-					return true; // no filter yet
-				},
-				uploadDir: tmpDir,
-			});
-			form.parse(req, async (err, fields, files) => {
-				// TODO: Better error handling
-				if (err) throw err;
+		const workspaceName = req.params.workspaceName;
+		const form = formidable({
+			keepExtensions: true,
+			multiples: true,
+			filter: ({ name, originalFilename, mimetype }) => {
+				// TODO: Filter certain ignored files
+				// For example: filter all files in a .git folder
+				return true; // no filter yet
+			},
+			uploadDir: tmpDir,
+		});
+		form.parse(req, async (err, fields, files) => {
+			// TODO: Better error handling
+			if (err) throw err;
 
-				const root = { name: workspaceName, files: [], dirs: {} };
-				for await (const f of files.file) {
-					const pathParts = f.originalFilename.split('/');
-					const file = { name: pathParts.pop(), file: await fs.readFile(f.filepath) };
-					fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
+			const root = { name: workspaceName, files: [], dirs: {} };
+			for await (const f of files.file) {
+				const pathParts = f.originalFilename.split('/');
+				const file = { name: pathParts.pop(), file: await fs.readFile(f.filepath) };
+				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
-					let parentDir = root;
-					for (const dname of pathParts) {
-						if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {} };
-						parentDir = parentDir.dirs[dname];
-					}
-					parentDir.files.push(file);
+				let parentDir = root;
+				for (const dname of pathParts) {
+					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {} };
+					parentDir = parentDir.dirs[dname];
 				}
+				parentDir.files.push(file);
+			}
 
-				const flattenDir = (dir) => {
-					let subdirIds = Object.values(dir.dirs).map((d) => flattenDir(d));
-					dir.dirs = subdirIds;
-					return dir;
-				};
-				flattenDir(root);
+			const flattenDir = (dir) => {
+				let subdirIds = Object.values(dir.dirs).map((d) => flattenDir(d));
+				dir.dirs = subdirIds;
+				return dir;
+			};
+			flattenDir(root);
 
-				const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [req.userId] });
-				await Models.user.updateOne({ _id: req.userId }, { $push: { workspaces: workspaceDoc._id } });
-				const user = await Models.user.findById(req.userId);
-				console.log({ user });
-				res.json({ success: true, id: workspaceDoc._id });
-			});
-		} else {
-			res.json({ success: false, err: 'Not Authenticated', id: null });
-		}
+			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [req.userId] });
+			await Models.user.updateOne({ _id: req.userId }, { $push: { workspaces: workspaceDoc._id } });
+			const user = await Models.user.findById(req.userId);
+			console.log({ user });
+			res.json({ success: true, id: workspaceDoc._id });
+		});
 	})
-	.get('/workspace/:workspaceId', async (req, res) => {
-		if (checkAuth(req, res)) {
-			const workspace = await Models.workspace.findById(req.params.workspaceId);
-			res.json({ success: true, root: workspace });
-		} else {
-			res.json({ success: false, err: 'Not Authenticated', root: {} });
-		}
+	.get('/workspace/:workspaceId', [forceAuth, authErrJSON({ root: {} })], async (req, res) => {
+		const workspace = await Models.workspace.findById(req.params.workspaceId);
+		res.json({ success: true, root: workspace });
 	})
-	.put('/workspace/:workspaceId/:fileId') // New File Content in body
-	.delete('/workspace/:workspaceId/:fileId') // File is deleted
-	.post('/workspace/file/:workspaceId') // Body contains path for new file
-	.post('/workspace/dir/:workspaceId'); // Body contains path for new directory
+	.put('/workspace/:workspaceId/:fileId', [forceAuth, authErrJSON()], async (req, res) => {}) // New File Content in body
+	.delete('/workspace/:workspaceId/:fileId', [forceAuth, authErrJSON()], async (req, res) => {}) // File is deleted
+	.post('/workspace/file/:workspaceId', [forceAuth, authErrJSON()], async (req, res) => {}) // Body contains path for new file
+	.post('/workspace/dir/:workspaceId', [forceAuth, authErrJSON()], async (req, res) => {}); // Body contains path for new directory
 
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));
