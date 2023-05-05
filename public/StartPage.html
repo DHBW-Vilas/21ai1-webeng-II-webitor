@@ -13,113 +13,81 @@
 
 </head>
 <body class="default">
-<div id="layout" class="g">
-    <div class="sidebar">
-
-           <div class="header">
-		 <h1 class="title">Webitor</h1>
-            <h2 class="tagline">Your Coding Playground</h2></div>
-<img class ="tangline" src="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\Home_Logo_Web.png" alt="Logo" style="width:100%">
-            <nav class="nav">
-                <ul class="nav-list">
-                    <li class="nav-item">
-                        <a class="button" href="https://github.com/DHBW-Vilas/21ai1-webeng-II-webitor.git">GitHub Repo</a>
-                    </li>
-                </ul>
-            </nav>
-
+    <div id="layout" class="g">
+        <div class="sidebar">
+            <div class="header">
+		    <h1 class="title">Webitor</h1>
+            <h2 class="tagline">Your Coding Playground</h2>
+        </div>
+        <img class ="tangline" src="D:\Dokumente\Daten\Duales Studium Siemens\4. Semester\Home_Logo_Web.png" alt="Logo" style="width:100%">
+        <nav class="nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a class="button" href="https://github.com/DHBW-Vilas/21ai1-webeng-II-webitor.git">GitHub Repo</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 
     <div class="content">
         <div>
             <!-- wrapper -->
             <div class="posts">
-
                 <section class="post">
                     <header class="post-header">
-
-
                         <h2 class="post-title">Welcome to Webitor</h2>
-
                     </header>
-
                     <div class="post-description">
                         <p>
                             Welcome to Webitor - Your online Coding Playground. </br> This is your coding environment which allows you to create workspaces, upload and work on local projects as well as connect your Github Account.
-							</br> The Editor supports the following languages: JavaScript, HTML, CSS, PHP, Python, SQL, C# and Java.
+                            </br> The Editor supports the following languages: JavaScript, HTML, CSS, PHP, Python, SQL, C# and Java.
                         </p>
                     </div>
                 </section>
             </div>
-                    </header>
-
-
-                </section>
-
-                <section class="post">
-                    <header class="post-header">
-
-                        <h2 class="post-title">Your Playground</h2>
-
-                    </header>
-
-
-
-
-<div class="container">
-
-<div class="box box-1">
-    <h2>New Workspace</h2>
-	<p>	GitHub
-    </br><label for="name">Name:</label>
-<input type="text" id="name" name="name" placeholder="Your Workspace Name">
-	</br><label for="menu">Programming Language:</label>
-<select id="menu" name="menu">
-  <option value="option1">Java</option>
-  <option value="option2">Python</option>
-  <option value="option3">C#</option>
-  <option value="option4">JavaScript</option>
-  <option value="option5">CSS</option>
-  <option value="option6">PHP</option>
-  <option value="option7">SQL</option>
-</select> </br>
-	<div id="drop-area">
-    <label for="nameInput">Name of your Workspace:</label>
-    <input type="text" id="nameInput" name="nameInput">
-  <label for="fileInput">Select files:</label>
-  <input type="file" id="fileInput" name="files[]" multiple webkitdirectory directory>
-  <span>or drag and drop files here</span>
-</div>
-</br> <button onclick="CreateWorkspace()">Create Workspace</button>
-    </p>
-</div>
-
-
- <div class="box box-2">
-    <h2>Your Workspaces</h2>
-    <div id="workspaces"></div>
- </div>
-
-</div>
-
-
-
-
-                </section>
-            </div>
-
-            <div class="footer">
-
-                    <ul>
-                        <button onclick="switchStyle('default')">Default</button>
-                        <button onclick="switchStyle('light')">Light Mode</button>
-						<button onclick="switchStyle('contrast')">High Contrast Mode</button>
-                        <button onclick="switchStyle('spooky')">Spooky Mode</button>
-                    </ul>
-
-            </div>
+            </header>
+            <section class="post">
+                <header class="post-header">
+                    <h2 class="post-title">Your Playground</h2>
+                </header>
+                <div class="container">
+                    <div class="box box-1">
+                        <h2>New Workspace</h2>
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" name="name" placeholder="Your Workspace Name">
+                        </br><label for="menu">Programming Language:</label>
+                        <select id="menu" name="menu">
+                            <option value="option1">Java</option>
+                            <option value="option2">Python</option>
+                            <option value="option3">C#</option>
+                            <option value="option4">JavaScript</option>
+                            <option value="option5">CSS</option>
+                            <option value="option6">PHP</option>
+                            <option value="option7">SQL</option>
+                        </select> </br>
+                        <div id="drop-area">
+                            <label for="fileInput">Select files:</label>
+                            <input type="file" id="fileInput" name="files[]" multiple webkitdirectory directory>
+                            <span>or drag and drop files here</span>
+                        </div>
+                        </br> <button onclick="CreateWorkspace()">Create Workspace</button>
+                        </p>
+                    </div>
+                    <div class="box box-2">
+                        <h2>Your Workspaces</h2>
+                        <div id="workspaces"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="footer">
+            <ul>
+                <button onclick="switchStyle('default')">Default</button>
+                <button onclick="switchStyle('light')">Light Mode</button>
+                <button onclick="switchStyle('contrast')">High Contrast Mode</button>
+                <button onclick="switchStyle('spooky')">Spooky Mode</button>
+            </ul>
         </div>
     </div>
-
 </body>
 </html>
