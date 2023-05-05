@@ -10,6 +10,8 @@ const app = express();
 const cookieParser = require('cookie-parser'); // for parsing cookies
 const bcrypt = require('bcrypt'); // for cryptographically secure password-hashing
 const formidable = require('formidable'); // for uploading files
+const Models = require('./models.js'); // Models for MongoDB
+const ws = require('./workspace.js'); // Utility methods for working with the workspace-directory-tree
 
 // Shortcut-constants:
 const ENV = process.env;
@@ -30,8 +32,7 @@ function genAuthTok(size = 30) {
 	return crypto.randomBytes(size).toString('hex');
 }
 
-// Connect to MongoDB && load required Mongo-Schemas
-const Models = require('./models.js');
+// Connect to MongoDB
 async function connectDB() {
 	const mongoURI = `mongodb+srv://${ENV.DB_USER}:${ENV.DB_PASS}@cluster0.91saw3c.mongodb.net/?retryWrites=true&w=majority`;
 	const db = await mongoose.connect(mongoURI);
@@ -190,15 +191,16 @@ app.get('/', (req, res) => {
 			// TODO: Better error handling
 			if (err) throw err;
 
+			let idCounter = 0;
 			const root = { name: workspaceName, files: [], dirs: {} };
 			for await (const f of files.file) {
 				const pathParts = f.originalFilename.split('/');
-				const file = { name: pathParts.pop(), file: await fs.readFile(f.filepath) };
+				const file = { name: pathParts.pop(), file: await fs.readFile(f.filepath), _id: idCounter++ };
 				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
 				let parentDir = root;
 				for (const dname of pathParts) {
-					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {} };
+					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: idCounter++ };
 					parentDir = parentDir.dirs[dname];
 				}
 				parentDir.files.push(file);
@@ -211,7 +213,7 @@ app.get('/', (req, res) => {
 			};
 			flattenDir(root);
 
-			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [req.userId] });
+			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [req.userId], idCounter });
 			await Models.user.updateOne({ _id: req.userId }, { $push: { workspaces: workspaceDoc._id } });
 			const user = await Models.user.findById(req.userId);
 			console.log({ user });
@@ -222,9 +224,39 @@ app.get('/', (req, res) => {
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
 		res.json({ success: true, root: workspace });
 	})
-	.put('/workspace/:workspaceId/:fileId', [forceAuth, authErrJSON()], async (req, res) => {}) // New File Content in body
-	.delete('/workspace/:workspaceId/:fileId', [forceAuth, authErrJSON()], async (req, res) => {}) // File is deleted
-	.post('/workspace/file/:workspaceId', [forceAuth, authErrJSON()], async (req, res) => {}) // Body contains path for new file
+	.put('/workspace/file/:workspaceId/:fileId', [forceAuth, authErrJSON()], async (req, res) => {
+		// New File Content should be the body
+		// TODO: Error Handling
+		try {
+			const workspace = await Models.workspace.findById(req.params.workspaceId);
+			const file = ws.findFileById(workspace, req.params.fileId);
+			file.content = Buffer.from(req.body);
+			await workspace.save();
+			res.json({ success: true });
+		} catch (e) {
+			console.error(e);
+			res.json({ success: false, err: 'Internal Error' });
+		}
+	})
+	.delete('/workspace/:workspaceId/:fileOrDirId', [forceAuth, authErrJSON()], async (req, res) => {
+		// Delete file / dir with _id == fileOrDirId
+		try {
+			const workspace = await Models.workspace.findById(req.params.workspaceId);
+			const res = ws.deleteById(workspace, req.params.fileOrDirId);
+			if (!res) {
+				return res.json({ success: false, err: 'File or Directory with ID ' + req.params.fileOrDirId + " doesn't exist" });
+			}
+			await workspace.save();
+			res.json({ success: true });
+		} catch (e) {
+			console.error(e);
+			res.json({ success: false, err: 'Internal Error' });
+		}
+	})
+	// TODO: Decide which API is better to work with for the frontend
+	// 1. /:workspaceId/:parentDirId with body == filename
+	// 2. /:workspaceId with body == path for new file (including filename)
+	.post('/workspace/file/:workspaceId', [forceAuth, authErrJSON()], async (req, res) => {})
 	.post('/workspace/dir/:workspaceId', [forceAuth, authErrJSON()], async (req, res) => {}); // Body contains path for new directory
 
 // Start Server

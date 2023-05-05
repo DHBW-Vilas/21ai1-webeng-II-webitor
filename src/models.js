@@ -2,10 +2,13 @@ const mongoose = require('mongoose');
 const { Schema, ObjectId } = mongoose;
 
 // Schema for each directory object in dirs:
+// _id: Number
 // name: String
 // dirs: [dirObject]
 // files: [fileObject]
+
 // Schema for each file object in files:
+// _id: Number
 // name: String
 // content: Buffer
 
@@ -14,6 +17,7 @@ const workspaceSchema = new Schema({
 	dirs: [Object],
 	files: [Object],
 	editors: [{ type: ObjectId, ref: 'userModel' }],
+	idCounter: Number,
 });
 
 const userSchema = new Schema({
