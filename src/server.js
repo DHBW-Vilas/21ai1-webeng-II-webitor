@@ -73,7 +73,7 @@ function authErrRedirect(err, req, res, next) {
 function authErrJSON(obj = {}) {
 	return (err, req, res, next) => {
 		if (req.userId === null) {
-			res.status(404).json({ ...obj, ...{ success: false, err: 'Not Authenticated' } });
+			res.json({ ...obj, ...{ success: false, err: 'Not Authenticated' } });
 		} else {
 			next(err);
 		}
