@@ -1,42 +1,11 @@
 # Webitor - A web-based Code Editor
 
-## Configuration
+## Run on Gitpod
 
-### Dockerfile
+To get the project up and running on [gitpod](https://gitpod.io/), add the repository [https://github.com/DHBW-Vilas/21ai1-webeng-II-webitor](https://github.com/DHBW-Vilas/21ai1-webeng-II-webitor) as a new workspace and run `gp validate`. This should automatically open a browser preview, that opens the website.
 
-You can setup a customize Gitpod image using the _.gitpod.Dockerfile_. You are free to include any tools you need.<br>
-Make sure the Dockerfile is referenced in _.gitpod.yml_ so that the changes will be applied.
+## Run locally
 
-### Gitpod configuration
+To run the project locally, make sure that you have [node.js and npm](https://nodejs.org/en) installed. Navigate to this project's root directory and run `npm install`. Afterwards, run `npm start` to start the server.
 
-The configuration for Gitpod is in the _.gitpod.yml_.<br>
-The most commonly used sections of the file are:
-
-| Section   | Description                                                   |
-| --------- | ------------------------------------------------------------- |
-| image     | choose an official image or reference the custom docker image |
-| ports     | configure visibility and action when a TCP port is opened     |
-| github    | configure prebuilds and other github features                 |
-| gitconfig | configure git client                                          |
-| vscode    | configure vscode and extensions                               |
-| tasks     | define command that should be executed on startup             |
-
-The tasks section devides into 3 subsections:
-
-| Section | Description                                                                                     |
-| ------- | ----------------------------------------------------------------------------------------------- |
-| before  | commands that are executed before any other subsection (e.g. set env var)                       |
-| init    | init commands (e.g. build, download dependencies, etc.) - is skipped when prebuilds are enabled |
-| command | commands that are executed on startup (e.g. start webserver)                                    |
-
-This is a simple diagram of the execution order:
-
-```mermaid
-graph TD;
-    before-->init;
-    init-->command;
-    before-->|prebuild|command;
-```
-
-More information can be found on the official documentation pages of Gitpod:<br>
-[Official Gitpod documentation - .gitpod.yml](https://www.gitpod.io/docs/configure)
+Now you can open your favorite browser and navigate to [localhost:3000](http://localhost:3000/).
