@@ -1,7 +1,9 @@
-FROM gitpod/workspace-mysql:latest
+FROM gitpod/workspace-full:latest
 
 USER gitpod
 
-# Install debugging for php and netcat
-RUN sudo apt-get update -q \
-    && sudo apt-get install php-xdebug php-dev automake autoconf netcat -y
+RUN bash -c 'VERSION="18.16.0" \
+    && source $HOME/.nvm/nvm.sh && nvm install $VERSION \
+    && nvm use $VERSION && nvm alias default $VERSION'
+
+RUN echo "nvm use default &>/dev/null" >> ~/.bashrc.d/51-nvm-fix
