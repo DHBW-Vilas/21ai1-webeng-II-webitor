@@ -1,5 +1,3 @@
-/*NORMAL AND BEAUTIFULLY DARK SHIT*/
-
 body.default {
 	--back_body: #111;
 	--back_box: #111;
@@ -21,7 +19,7 @@ body.light {
 	--back_sidebar: rgb(61, 79, 93);
 	--front_body: #111;
 	--front_sidebar: #8df2ff;
-	--front_box: #fff;
+	--front_box: #111;
 	--borders: rgb(61, 79, 93);
 	--file_borders: rgb(61, 79, 93);
 	--drop_highlight: #fff;
