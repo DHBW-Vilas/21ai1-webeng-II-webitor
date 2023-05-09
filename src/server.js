@@ -101,10 +101,10 @@ function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
 
 // Set up Routing
 app.get('/', (req, res) => {
-	res.sendFile(path.join(publicPath, 'StartPage.html'));
+	res.sendFile(path.join(publicPath, 'Frontend', 'HomeLayout', 'StartPage.html'));
 })
 	.get('/editor', (req, res) => {
-		res.sendFile(path.join(publicPath, 'CodeMirror.html'));
+		res.sendFile(path.join(publicPath, 'Frontend', 'EditorLayout', 'CodeMirror.html'));
 	})
 	.get('/login', (req, res) => {
 		res.sendFile(path.join(publicPath, 'login.html'));
