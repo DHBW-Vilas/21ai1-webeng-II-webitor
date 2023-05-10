@@ -28,8 +28,8 @@ const MAX_AUTH_TIME = 1000 * 60 * 60 * 12 * 5; // 5 days (in ms)
 // Global State
 const AUTH_TOKS = {};
 
-function genAuthTok(size = 30) {
-	return crypto.randomBytes(size).toString('hex');
+function genRandStr(size = 32, encoding = 'hex') {
+	return crypto.randomBytes(size).toString(encoding);
 }
 
 // Connect to MongoDB
@@ -45,21 +45,34 @@ app.use('/public', express.static(publicPath));
 app.use(express.json());
 app.use(cookieParser(ENV.SECRET));
 
-function checkAuth(req, res) {
-	const authTok = req.signedCookies['auth'];
+async function checkAuth(req, res, authAsAnon = true) {
+	let authTok = req.signedCookies['auth'];
 	req.userId = AUTH_TOKS[authTok] ?? null;
-	if (AUTH_TOKS[authTok]) {
-		req.userId = AUTH_TOKS[authTok];
-		res.cookie('url', '');
-		return true;
-	} else {
-		return false;
+	if (AUTH_TOKS[authTok] === null) {
+		if (!authAsAnon) return false;
+		authTok = await createUser();
 	}
+	req.userId = AUTH_TOKS[authTok];
+	res.cookie('url', '');
+	return true;
+}
+
+async function isAnon(userId) {
+	return Models.user
+		.findById(userId)
+		.then((user) => user.anon)
+		.catch((e) => false);
+}
+
+const ANON_USER_LIFETIME = 1000 * 60 * 60 * 12 * 4; // 4 days
+const ANON_RM_INTERVAL = 1000 * 60 * 60 * 6; // 6 hours
+async function rmAnonUsers(before = Date.now() - ANON_USER_LIFETIME) {
+	return Models.user.deleteMany({ anon: true, updatedAt: { $lte: before } });
 }
 
 // req.userId holds the user ID or an error is raised
-function forceAuth(req, res, next) {
-	if (checkAuth(req, res)) next();
+async function forceAuth(req, res, next) {
+	if (await checkAuth(req, res, false)) next();
 	else next(new Error('Unauthenticated'));
 }
 
@@ -93,10 +106,21 @@ function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
 		fileOnAuth = path.join(publicPath, fileOnAuth);
 		fileOnErr = path.join(publicPath, fileOnErr);
 	}
-	return (req, res) => {
-		if (checkAuth(req, res)) res.sendFile(fileOnAuth);
+	return async (req, res) => {
+		if (await checkAuth(req, res)) res.sendFile(fileOnAuth);
 		else res.sendFile(fileOnErr);
 	};
+}
+
+async function createUser(name = null, pass = null) {
+	if (!name) name = genRandStr(24, 'utf-8');
+	if (!pass) pass = genRandStr(24, 'utf-8');
+	const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
+	const newUser = await Models.user.create({ name, pass: hashedPass, anon, workspaces: [] });
+
+	const authTok = genRandStr(32, 'hex');
+	AUTH_TOKS[authTok] = newUser._id;
+	return authTok;
 }
 
 // Set up Routing
@@ -126,11 +150,7 @@ app.get('/', (req, res) => {
 			return res.status(418).json({ success: false, err: 'Username is already taken' });
 		}
 
-		const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
-		const newUser = await Models.user.create({ name, pass: hashedPass, workspaces: [] });
-
-		const authTok = genAuthTok();
-		AUTH_TOKS[authTok] = newUser._id;
+		const authTok = await createUser(name, pass, false);
 		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).status(200).json({ success: true, url: newURL });
 	})
 	.post('/login', async (req, res) => {
@@ -156,7 +176,7 @@ app.get('/', (req, res) => {
 			return res.status(418).json({ err: 'Wrong password.', success: false, url: null });
 		}
 
-		const authTok = genAuthTok();
+		const authTok = genRandStr(32, 'hex');
 		AUTH_TOKS[authTok] = user._id;
 		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true }).status(200).json({ success: true, url: newURL });
 	})
@@ -164,7 +184,11 @@ app.get('/', (req, res) => {
 		const user = await Models.user.findById(req.userId);
 		const workspaces = [];
 		for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
-		return res.json({ success: true, workspaces });
+		const anon = await isAnon(req.userId);
+		return res.json({ success: true, workspaces, anon });
+	})
+	.post('/create/:workspaceName/:language', [forceAuth, authErrJSON()], async (req, res) => {
+		// TODO: Create hello world workspace for the given language
 	})
 	.post('/new/:workspaceName', [forceAuth, authErrJSON()], async (req, res) => {
 		// @performance
@@ -173,8 +197,6 @@ app.get('/', (req, res) => {
 		// The only other way would however be to use something like GridFS,
 		// which apparently allows streamed buffer-upload.
 		// Our files shouldn't be bigger than 16MB though, so using GridFS seems like overkill.
-		// It seems especially unimportant if we can start using the files on the client
-		// before the server has responded.
 
 		const workspaceName = req.params.workspaceName;
 		const form = formidable({
@@ -261,3 +283,5 @@ app.get('/', (req, res) => {
 
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));
+
+rmAnonUsers().then(() => setInterval(rmAnonUsers, ANON_RM_INTERVAL));

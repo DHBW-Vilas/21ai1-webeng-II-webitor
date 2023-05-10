@@ -12,19 +12,26 @@ const { Schema, ObjectId } = mongoose;
 // name: String
 // content: Buffer
 
-const workspaceSchema = new Schema({
-	name: String,
-	dirs: [Object],
-	files: [Object],
-	editors: [{ type: ObjectId, ref: 'userModel' }],
-	idCounter: Number,
-});
+const workspaceSchema = new Schema(
+	{
+		name: String,
+		dirs: [Object],
+		files: [Object],
+		editors: [{ type: ObjectId, ref: 'userModel' }],
+		idCounter: Number,
+	},
+	{ timestamps: true }
+);
 
-const userSchema = new Schema({
-	name: String,
-	pass: String,
-	workspaces: [{ type: ObjectId, ref: 'workspaceModel' }],
-});
+const userSchema = new Schema(
+	{
+		name: String,
+		pass: String,
+		anon: Boolean,
+		workspaces: [{ type: ObjectId, ref: 'workspaceModel' }],
+	},
+	{ timestamps: true }
+);
 
 module.exports = {
 	workspace: mongoose.model('workspaceModel', workspaceSchema),
