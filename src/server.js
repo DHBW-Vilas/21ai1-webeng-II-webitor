@@ -52,6 +52,7 @@ async function checkAuth(req, res, authAsAnon = true) {
 	if (!AUTH_TOKS[authTok]) {
 		if (!authAsAnon) return false;
 		authTok = await createUser();
+		setAuthCookie(res, authTok);
 	}
 	req.userId = AUTH_TOKS[authTok];
 	res.cookie('url', '');
@@ -124,6 +125,10 @@ async function createUser(name = null, pass = null, anon = name === null || pass
 	return authTok;
 }
 
+function setAuthCookie(res, authTok) {
+	return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true });
+}
+
 // Set up Routing
 app.get('/', (req, res) => {
 	res.sendFile(path.join(publicPath, 'Frontend', 'HomeLayout', 'StartPage.html'));
@@ -152,7 +157,7 @@ app.get('/', (req, res) => {
 		}
 
 		const authTok = await createUser(name, pass, false);
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'lax', httpOnly: true }).status(200).json({ success: true, url: newURL });
+		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
 	})
 	.post('/login', async (req, res) => {
 		let name = req.body.name || null;
@@ -179,11 +184,12 @@ app.get('/', (req, res) => {
 
 		const authTok = genRandStr(32, 'hex');
 		AUTH_TOKS[authTok] = user._id;
-		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true }).status(200).json({ success: true, url: newURL });
+		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
 	})
 	.get('/workspaces', async (req, res) => {
 		if (!(await checkAuth(req, res, true))) return res.json({ success: false, err: 'Not authenticated' });
 		const user = await Models.user.findById(req.userId);
+		console.log({ user });
 		const workspaces = [];
 		for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
 		const anon = await isAnon(req.userId);
