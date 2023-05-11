@@ -67,7 +67,9 @@ module.exports.deleteById = deleteById;
  */
 function archiveDir(Archiver, dir, path = '/') {
 	for (const file of dir.files) {
-		Archiver.append(Buffer.from(file.file), { name: join(path, file.name) });
+		// @performance
+		// There must be a better way than to convert the binary blob into a string and then back into a binary buffer
+		Archiver.append(Buffer.from(file.file.toString(), 'utf-8'), { name: join(path, file.name) });
 	}
 	for (const d of dir.dirs) {
 		archiveDir(Archiver, d, join(path, dir.name));
