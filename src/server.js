@@ -49,7 +49,7 @@ app.use(cookieParser(ENV.SECRET));
 async function checkAuth(req, res, authAsAnon = true) {
 	let authTok = req.signedCookies['auth'];
 	req.userId = AUTH_TOKS[authTok] ?? null;
-	if (AUTH_TOKS[authTok] === null) {
+	if (!AUTH_TOKS[authTok]) {
 		if (!authAsAnon) return false;
 		authTok = await createUser();
 	}
@@ -113,7 +113,7 @@ function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
 	};
 }
 
-async function createUser(name = null, pass = null) {
+async function createUser(name = null, pass = null, anon = name === null || pass === null) {
 	if (!name) name = genRandStr(24, 'utf-8');
 	if (!pass) pass = genRandStr(24, 'utf-8');
 	const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
@@ -181,7 +181,8 @@ app.get('/', (req, res) => {
 		AUTH_TOKS[authTok] = user._id;
 		return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true }).status(200).json({ success: true, url: newURL });
 	})
-	.get('/workspaces', [forceAuth, authErrJSON({ workspaces: [] })], async (req, res) => {
+	.get('/workspaces', async (req, res) => {
+		if (!(await checkAuth(req, res, true))) return res.json({ success: false, err: 'Not authenticated' });
 		const user = await Models.user.findById(req.userId);
 		const workspaces = [];
 		for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
@@ -244,7 +245,7 @@ app.get('/', (req, res) => {
 		});
 	})
 	.get('/download/:workspaceId', async (req, res) => {
-		if (!checkAuth(req, res)) return res.status(401).end();
+		if (!(await checkAuth(req, res))) return res.status(401).end();
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
 		if (!workspace.editors.includes(req.userId)) return res.status(401).end();
 
@@ -305,4 +306,4 @@ app.get('/', (req, res) => {
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));
 
-rmAnonUsers().then(() => setInterval(rmAnonUsers, ANON_RM_INTERVAL));
+rmAnonUsers(Date.now()).then(() => setInterval(rmAnonUsers, ANON_RM_INTERVAL));
