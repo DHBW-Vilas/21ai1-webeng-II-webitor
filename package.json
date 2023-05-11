@@ -19,6 +19,7 @@
 	},
 	"homepage": "https://github.com/DHBW-Vilas/21ai1-webeng-II-webitor#readme",
 	"dependencies": {
+		"archiver": "^5.3.1",
 		"bcrypt": "^5.1.0",
 		"cookie-parser": "^1.4.6",
 		"dotenv": "^16.0.3",

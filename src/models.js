@@ -10,7 +10,7 @@ const { Schema, ObjectId } = mongoose;
 // Schema for each file object in files:
 // _id: Number
 // name: String
-// content: Buffer
+// file: Buffer
 
 const workspaceSchema = new Schema({
 	name: String,

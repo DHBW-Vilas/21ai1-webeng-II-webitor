@@ -1,7 +1,7 @@
 const process = require('process'); // for accessing environment variables
 const path = require('path'); // for creating correct File-Descriptors on the given OS
 const fs = require('fs/promises'); // for reading uploaded files from tmp dir
-const { existsSync } = require('fs');
+const { existsSync, createReadStream } = require('fs');
 const crypto = require('crypto'); // for generating authentication tokens
 require('dotenv').config({ path: path.join(__dirname, '..', 'config.env'), override: false }); // for loading environment variables from '.env'
 const mongoose = require('mongoose'); // for connecting with MongoDB
@@ -12,6 +12,7 @@ const bcrypt = require('bcrypt'); // for cryptographically secure password-hashi
 const formidable = require('formidable'); // for uploading files
 const Models = require('./models.js'); // Models for MongoDB
 const ws = require('./workspace.js'); // Utility methods for working with the workspace-directory-tree
+const archiver = require('archiver'); // For archiving workspace in a single zip-file
 
 // Shortcut-constants:
 const ENV = process.env;
@@ -219,6 +220,26 @@ app.get('/', (req, res) => {
 			console.log({ user });
 			res.json({ success: true, id: workspaceDoc._id });
 		});
+	})
+	.get('/download/:workspaceId', async (req, res) => {
+		if (!checkAuth(req, res)) return res.status(401).end();
+		const workspace = await Models.workspace.findById(req.params.workspaceId);
+		if (!workspace.editors.includes(req.userId)) return res.status(401).end();
+
+		res.setHeader('content-type', 'application/zip, application/octet-stream');
+		res.setHeader('content-disposition', `attachment;filename="${workspace.name}.zip"`);
+		res.setHeader('content-description', 'File Transfer');
+		res.setHeader('content-transfer-encoding', 'binary');
+
+		const Zipper = archiver.create('zip');
+		res.on('finish', () => {
+			res.end();
+		});
+		Zipper.on('warning', (w) => console.log({ warning: w }));
+		Zipper.on('error', (e) => console.log({ error: e }));
+		Zipper.pipe(res);
+		ws.archiveDir(Zipper, workspace);
+		Zipper.finalize();
 	})
 	.get('/workspace/:workspaceId', [forceAuth, authErrJSON({ root: {} })], async (req, res) => {
 		const workspace = await Models.workspace.findById(req.params.workspaceId);

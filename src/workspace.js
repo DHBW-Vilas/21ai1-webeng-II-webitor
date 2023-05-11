@@ -1,3 +1,6 @@
+const archiver = require('archiver');
+const { join } = require('path');
+
 function findFileById(root, id) {
 	let res = root.files.find((f) => f._id === id);
 	if (id !== null) return res;
@@ -56,3 +59,18 @@ function deleteById(root, id) {
 	else return deleteDirById(root, id);
 }
 module.exports.deleteById = deleteById;
+
+/**
+ * @param {archiver.Archiver} Archiver The Archiver used to archive the directory
+ * @param {*} dir The workspace directory to archive
+ * @param {String} path The path from the workspace root to this directory
+ */
+function archiveDir(Archiver, dir, path = '/') {
+	for (const file of dir.files) {
+		Archiver.append(Buffer.from(file.file), { name: join(path, file.name) });
+	}
+	for (const d of dir.dirs) {
+		archiveDir(Archiver, d, join(path, dir.name));
+	}
+}
+module.exports.archiveDir = archiveDir;
