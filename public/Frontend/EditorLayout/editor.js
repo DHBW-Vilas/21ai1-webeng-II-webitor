@@ -1,10 +1,38 @@
 const fileExplorerEl = document.getElementById('file-explorer');
+const downloadBtn = document.getElementById('download-btn');
 
 const myEditor = CodeMirror.fromTextArea(document.getElementById('editor'), {
 	lineNumbers: true,
 	mode: 'javascript',
 	//theme: "monokai"
 });
+
+const workspaceId = localStorage.getItem('workspaceId');
+if (workspaceId === null) {
+	// TODO: Error Handling
+}
+fetch('/workspace/' + workspaceId)
+	.then((res) => res.json())
+	.then((res) => {
+		// TODO: Error Handling
+		console.log({ res });
+		const root = res.root;
+		addDirEl(fileExplorerEl, root);
+	})
+	.catch((err) => {
+		// TODO: Error Handling
+		console.log({ err });
+	});
+
+downloadBtn.addEventListener('click', downloadWorkspace);
+
+async function downloadWorkspace() {
+	const anchor = document.createElement('a');
+	anchor.href = '/download/' + workspaceId;
+	anchor.target = '_blank';
+	anchor.click();
+	anchor.remove();
+}
 
 // saveBtn.addEventListener('click', saveFile);
 
@@ -17,22 +45,6 @@ document.addEventListener('keyup', (e) => {
 function saveFile() {
 	fetch('/');
 }
-
-const workspaceId = localStorage.getItem('workspaceId');
-if (workspaceId === null) {
-	// TODO: Error Handling
-}
-fetch('/workspace/' + workspaceId)
-	.then((res) => res.json())
-	.then((res) => {
-		// TODO: Error Handling
-		console.log(res);
-		const root = res.root;
-		addDirEl(fileExplorerEl, root);
-	})
-	.catch((err) => {
-		// TODO: Error Handling
-	});
 
 function openFile(file) {
 	tabName = file.name;
