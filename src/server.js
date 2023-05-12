@@ -46,9 +46,27 @@ app.use('/public', express.static(publicPath));
 app.use(express.json());
 app.use(cookieParser(ENV.SECRET));
 
+/**
+ *
+ * @param {String} fileOnAuth The File to respond with if the user is authenticated
+ * @param {String} fileOnErr The File to respond with if the user isn't authenticated
+ * @param {Boolean} inPublicDir Whether the files are assumed to be in the public directory.
+ * @returns
+ */
+function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
+	if (inPublicDir) {
+		fileOnAuth = path.join(publicPath, fileOnAuth);
+		fileOnErr = path.join(publicPath, fileOnErr);
+	}
+	return async (req, res) => {
+		if (await checkAuth(req, res)) res.sendFile(fileOnAuth);
+		else res.sendFile(fileOnErr);
+	};
+}
+
 async function checkAuth(req, res, authAsAnon = true) {
 	let authTok = req.signedCookies['auth'];
-	req.userId = AUTH_TOKS[authTok] ?? null;
+	req.userId = AUTH_TOKS[authTok];
 	if (!AUTH_TOKS[authTok]) {
 		if (!authAsAnon) return false;
 		authTok = await createUser();
@@ -96,24 +114,6 @@ function authErrJSON(obj = {}) {
 	};
 }
 
-/**
- *
- * @param {String} fileOnAuth The File to respond with if the user is authenticated
- * @param {String} fileOnErr The File to respond with if the user isn't authenticated
- * @param {Boolean} inPublicDir Whether the files are assumed to be in the public directory.
- * @returns
- */
-function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
-	if (inPublicDir) {
-		fileOnAuth = path.join(publicPath, fileOnAuth);
-		fileOnErr = path.join(publicPath, fileOnErr);
-	}
-	return async (req, res) => {
-		if (await checkAuth(req, res)) res.sendFile(fileOnAuth);
-		else res.sendFile(fileOnErr);
-	};
-}
-
 async function createUser(name = null, pass = null, anon = name === null || pass === null) {
 	if (!name) name = genRandStr(24, 'utf-8');
 	if (!pass) pass = genRandStr(24, 'utf-8');
@@ -127,6 +127,21 @@ async function createUser(name = null, pass = null, anon = name === null || pass
 
 function setAuthCookie(res, authTok) {
 	return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true });
+}
+
+async function transferAnonWorkspaces(req, newAuthTok) {
+	const oldAuthTok = req.signedCookies['auth'];
+	const oldUserId = AUTH_TOKS[oldAuthTok];
+	if (!oldUserId) return;
+	const oldUser = await Models.user.findById(oldUserId);
+	if (!oldUser.anon) return;
+	const newUserId = AUTH_TOKS[newAuthTok];
+	const newUser = await Models.user.findById(newUserId);
+	for (const wsId of oldUser.workspaces) {
+		Models.workspace.findByIdAndUpdate(wsId, { editors: [newUserId] });
+		newUser.workspaces.push(wsId);
+	}
+	newUser.save();
 }
 
 // Set up Routing
@@ -157,6 +172,7 @@ app.get('/', (req, res) => {
 		}
 
 		const authTok = await createUser(name, pass, false);
+		transferAnonWorkspaces(req, authTok);
 		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
 	})
 	.post('/login', async (req, res) => {
@@ -184,6 +200,7 @@ app.get('/', (req, res) => {
 
 		const authTok = genRandStr(32, 'hex');
 		AUTH_TOKS[authTok] = user._id;
+		transferAnonWorkspaces(req, authTok);
 		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
 	})
 	.get('/workspaces', async (req, res) => {
