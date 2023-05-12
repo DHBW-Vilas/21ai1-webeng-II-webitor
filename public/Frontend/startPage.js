@@ -1,4 +1,17 @@
+/** @type {HTMLDivElement} */
 const workspaceParentDiv = document.getElementById('workspaces');
+/** @type {HTMLInputElement} */
+const fileInput = document.getElementById('fileInput');
+/** @type {HTMLInputElement} */
+const createWSName = document.getElementById('newWSName');
+/** @type {HTMLButtonElement} */
+const createWSBtn = document.getElementById('newWSBtn');
+/** @type {HTMLInputElement} */
+const uploadWSName = document.getElementById('uploadWSName');
+/** @type {HTMLButtonElement} */
+const uploadWSBtn = document.getElementById('uploadWSBtn');
+/** @type {HTMLSelectElement} */
+const langSelect = document.getElementById('langMenu');
 
 fetch('/workspaces')
 	.then((res) => res.json())
@@ -19,38 +32,57 @@ function openWorkspace(workspaceId) {
 	window.location.href = '/editor';
 }
 
-const fileInput = document.getElementById('fileInput');
-const nameInput = document.getElementById('name');
+let pendingReq = false;
 
-fileInput.addEventListener('change', handleFiles, false);
+uploadWSBtn.addEventListener('click', uploadWS);
+createWSBtn.addEventListener('click', createWS);
 
-function handleFiles() {
-	const fd = new FormData();
-	const files = Array.from(this.files);
-	files.forEach((file) => {
-		const FR = new FileReader();
-		FR.addEventListener('load', () => console.log(FR.result));
-		FR.readAsText(file);
-		fd.append('file', file, file.webkitRelativePath);
-	});
-
-	if (!nameInput.value) {
-		// TODO: Show the error to the user or maybe use some default name??
-		console.log('ERROR: No Workspace name entered');
+function uploadWS() {
+	const name = uploadWSName.value;
+	const files = Array.from(fileInput.files ?? []);
+	if (!name || !files) {
+		// TODO: Show Error to the user
+		console.log('ERROR');
 		return;
 	}
 
-	fetch('/new/' + nameInput.value, {
+	const fd = new FormData();
+	files.forEach((file) => fd.append('file', file, file.webkitRelativePath));
+	pendingReq = true;
+	fetch('/upload/' + name, {
 		method: 'POST',
 		body: fd,
 	})
 		.then((res) => res.json())
-		.then((res) => {
-			// TODO: Check that response is ok && handle errors if necessary
-			const workspaceId = res.id;
-			localStorage.setItem('workspaceId', workspaceId);
-			window.location.href = '/editor';
-		});
+		.then(newWSResHandler);
+}
+
+function createWS() {
+	const name = createWSName.value;
+	if (!name) {
+		// TODO: Show Error to the user
+		console.log('ERROR');
+		return;
+	}
+
+	pendingReq = true;
+	fetch('/create/' + name + '/' + langSelect.value, {
+		method: 'POST',
+	})
+		.then((res) => res.json())
+		.then(newWSResHandler);
+}
+
+function newWSResHandler(res) {
+	pendingReq = false;
+	// TODO: Error Handling
+	if (!res.success) {
+		console.log({ res });
+		return;
+	}
+	const workspaceId = res.id;
+	localStorage.setItem('workspaceId', workspaceId);
+	window.location.href = '/editor';
 }
 
 // const dropArea = document.getElementById('drop-area');

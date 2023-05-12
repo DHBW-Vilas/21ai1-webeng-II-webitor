@@ -49,29 +49,40 @@
                     <h2 class="post-title">Your Playground</h2>
                 </header>
                 <div class="container">
-                    <div class="box box-1">
-                        <h2>New Workspace</h2>
-                        <label for="name">Name:</label>
-                        <input type="text" id="name" name="name" placeholder="Your Workspace Name">
-                        </br><label for="menu">Programming Language:</label>
-                        <select id="menu" name="menu">
-                            <option value="option1">Java</option>
-                            <option value="option2">Python</option>
-                            <option value="option3">C#</option>
-                            <option value="option4">JavaScript</option>
-                            <option value="option5">CSS</option>
-                            <option value="option6">PHP</option>
-                            <option value="option7">SQL</option>
+                    <div class="box create-ws-box">
+                        <h2>Create new Workspace</h2>
+                        <label for="newWSName">Name:</label>
+                        <input type="text" id="newWSName" name="newWSName" placeholder="Your Workspace Name">
+                        </br><label for="langMenu">Programming Language:</label>
+                        <select id="langMenu" name="langMenu">
+                            <option value="none">None</option>
+                            <option value="java">Java</option>
+                            <option value="py">Python</option>
+                            <option value="c">C</option>
+                            <option value="cpp">C++</option>
+                            <option value="cs">C#</option>
+                            <option value="js">JavaScript</option>
+                            <option value="php">PHP</option>
                         </select> </br>
+                        </br> <button id="newWSBtn">Create</button>
+                        </p>
+                    </div>
+
+                    <div class="box create-ws-box">
+                        <h2>Upload local Workspace</h2>
+                        <label for="uploadWSName">Name:</label>
+                        <input type="text" id="uploadWSName" name="uploadWSName" placeholder="Your Workspace Name">
+                        </br>
                         <div id="drop-area">
                             <label for="fileInput">Select files:</label>
                             <input type="file" id="fileInput" name="files[]" multiple webkitdirectory directory>
-                            <span>or drag and drop files here</span>
+                            <!-- <span>or drag and drop files here</span> -->
                         </div>
-                        </br> <button onclick="CreateWorkspace()">Create Workspace</button>
+                        </br> <button id="uploadWSBtn">Upload</button>
                         </p>
                     </div>
-                    <div class="box box-2">
+
+                    <div class="box workspaces-container">
                         <h2>Your Workspaces</h2>
                         <div id="workspaces"></div>
                     </div>

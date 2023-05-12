@@ -214,8 +214,10 @@ app.get('/', (req, res) => {
 	})
 	.post('/create/:workspaceName/:language', [forceAuth, authErrJSON()], async (req, res) => {
 		// TODO: Create hello world workspace for the given language
+		console.log(req.params);
+		res.json({ success: false, err: 'Not implemented yet' });
 	})
-	.post('/new/:workspaceName', [forceAuth, authErrJSON()], async (req, res) => {
+	.post('/upload/:workspaceName', [forceAuth, authErrJSON()], async (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
