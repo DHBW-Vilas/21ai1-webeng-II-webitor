@@ -214,8 +214,10 @@ app.get('/', (req, res) => {
 	})
 	.post('/create/:workspaceName/:language', [forceAuth, authErrJSON()], async (req, res) => {
 		// TODO: Create hello world workspace for the given language
+		console.log(req.params);
+		res.json({ success: false, err: 'Not implemented yet' });
 	})
-	.post('/new/:workspaceName', [forceAuth, authErrJSON()], async (req, res) => {
+	.post('/upload/:workspaceName', [forceAuth, authErrJSON()], async (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
@@ -267,6 +269,12 @@ app.get('/', (req, res) => {
 			res.json({ success: true, id: workspaceDoc._id });
 		});
 	})
+	.post('/empty/workspace', async (req, res) => {
+		if (!(await checkAuth(req, res, true))) return res.json({ success: false });
+		const workspace = await Models.workspace.create({ name: 'Unnamed', dirs: [], files: [], editors: [req.userId] });
+		Models.user.updateOne({ id: req.userId }, { $push: { workspaces: workspace._id } });
+		return res.json({ success: true, workspaceId: workspace._id });
+	})
 	.get('/download/:workspaceId', async (req, res) => {
 		if (!(await checkAuth(req, res))) return res.status(401).end();
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
@@ -287,13 +295,15 @@ app.get('/', (req, res) => {
 		ws.archiveDir(Zipper, workspace);
 		Zipper.finalize();
 	})
-	.get('/workspace/:workspaceId', [forceAuth, authErrJSON({ root: {} })], async (req, res) => {
+	.get('/workspace/:workspaceId', async (req, res) => {
+		if (!(await checkAuth(req, res, false))) return res.json({ success: false });
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
 		res.json({ success: true, root: workspace });
 	})
-	.put('/workspace/file/:workspaceId/:fileId', [forceAuth, authErrJSON()], async (req, res) => {
+	.put('/workspace/file/:workspaceId/:fileId', async (req, res) => {
 		// New File Content should be the body
 		// TODO: Error Handling
+		if (!(await checkAuth(req, res, false))) return res.json({ success: false });
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
 			const file = ws.findFileById(workspace, req.params.fileId);

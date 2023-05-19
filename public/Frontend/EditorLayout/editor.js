@@ -7,22 +7,41 @@ const myEditor = CodeMirror.fromTextArea(document.getElementById('editor'), {
 	//theme: "monokai"
 });
 
-const workspaceId = localStorage.getItem('workspaceId');
-if (workspaceId === null) {
-	// TODO: Error Handling
+let workspaceId = localStorage.getItem('workspaceId');
+console.log({ workspaceId });
+if (!workspaceId) {
+	fetch('/empty/workspace', { method: 'POST' })
+		.then((res) => res.json())
+		.then((res) => {
+			workspaceId = res.workspaceId;
+			localStorage.setItem('workspaceId', workspaceId);
+			getWorkspace(workspaceId);
+		});
+} else {
+	getWorkspace();
 }
-fetch('/workspace/' + workspaceId)
-	.then((res) => res.json())
-	.then((res) => {
-		// TODO: Error Handling
-		console.log({ res });
-		const root = res.root;
-		addDirEl(fileExplorerEl, root);
-	})
-	.catch((err) => {
-		// TODO: Error Handling
-		console.log({ err });
-	});
+
+function getWorkspace() {
+	fetch('/workspace/' + workspaceId)
+		.then((res) => res.json())
+		.then((res) => {
+			if (!res.success) {
+				return fetch('/empty/workspace', { method: 'POST' })
+					.then((res) => res.json())
+					.then((res) => {
+						workspaceId = res.workspaceId;
+						localStorage.setItem('workspaceId', workspaceId);
+						return getWorkspace();
+					});
+			}
+			const root = res.root;
+			addDirEl(fileExplorerEl, root);
+		})
+		.catch((err) => {
+			// TODO: Error Handling
+			console.log({ err });
+		});
+}
 
 downloadBtn.addEventListener('click', downloadWorkspace);
 

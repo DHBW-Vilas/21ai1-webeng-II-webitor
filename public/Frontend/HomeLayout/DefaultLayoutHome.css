@@ -28,7 +28,7 @@ body.light {
 	--box_shadow: #66a3e9;
 }
 
-body.contrast{
+body.contrast {
 	--back_body: #111;
 	--back_box: #111;
 	--back_sidebar: #9c8c03;
@@ -43,21 +43,20 @@ body.contrast{
 	--box_shadow: #e9e766;
 }
 
-body.spooky{
-		--back_body: #111;
-		--back_box: #111;
-		--back_sidebar: rgb(145, 0, 0);
-		--front_body: #fff;
-		--front_sidebar: #111;
-		--front_box: #fff;
-		--borders: rgb(145, 0, 0);
-		--file_borders: rgb(145, 0, 0);
-		--drop_highlight: #fff;
-		--box_highlighting: rgba(255, 0, 0, 0.1);
-		--border_dropdown_color: #e96666;
-		--box_shadow: #e96666;
+body.spooky {
+	--back_body: #111;
+	--back_box: #111;
+	--back_sidebar: rgb(145, 0, 0);
+	--front_body: #fff;
+	--front_sidebar: #111;
+	--front_box: #fff;
+	--borders: rgb(145, 0, 0);
+	--file_borders: rgb(145, 0, 0);
+	--drop_highlight: #fff;
+	--box_highlighting: rgba(255, 0, 0, 0.1);
+	--border_dropdown_color: #e96666;
+	--box_shadow: #e96666;
 }
-
 
 /*CONTRASTY SHIT*/
 
@@ -73,7 +72,7 @@ body {
 .container {
 	display: grid;
 	grid-gap: 10px;
-	grid-template-columns: 1fr 2fr;
+	grid-template-columns: 1fr 1fr 1fr;
 	padding: 20px;
 	height: 50vh;
 }
@@ -88,13 +87,13 @@ body {
 }
 
 /* Style the individual container items */
-.box-1 {
+.create-ws-box {
 	text-align: center;
 	margin-top: 0;
 	border: 2px solid var(--borders);
 }
 
-.box-2 {
+.workspaces-container {
 	margin-bottom: 0;
 	border: 2px solid var(--borders);
 }
