@@ -1,5 +1,45 @@
 /* BASICS */
 /* Style the containers within the grid */
+       /* Set up the container for the image and table */
+	   .containerHead {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+
+      /* Set the width of the image and the table */
+      img, table {
+        width: 50%;
+      }
+
+      /* Remove borders and spacing from the table */
+      table {
+        border-collapse: collapse;
+        margin-left: 10px;
+      }
+
+      td, th {
+        border: none;
+        padding: 5px;
+      }
+	  
+	  
+      /* Set button styles */
+      button {
+        width: 60px;
+        height: 30px;
+        border: 2px solid #9c8c03;
+        background-color: #111;
+        color: #9c8c03;
+        font-size: 12px;
+      }
+      /* Style for the container div */
+      .button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
 
 .container {
 	display: grid;
@@ -13,14 +53,14 @@
 header,
 footer {
 	grid-column: 1 / -1;
-	background-color: #271e4b;
-	color: #aaa3c9;
+	background-color: #111;
+	color: #9c8c03;
 	padding: 10px;
 }
 
 .box {
-	color: #aaa3c9;
-	background-color: #271e4b;
+	color: #9c8c03
+	background-color: #111;
 	padding: 20px;
 	border-radius: 20px;
 }
@@ -34,13 +74,13 @@ footer {
 .box-2 {
 	grid-column: 2 / 3;
 	grid-row: 2 / 3;
-	background-color: #080029;
+	background-color: #111;
 }
 
 .box-3 {
 	grid-column: 3 / 4;
 	grid-row: 2 / 3;
-	background-color: #080029;
+	background-color: #111;
 }
 
 /* This CSS applies to the entire page */
@@ -49,7 +89,8 @@ body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
-	background-color: #271e4b;
+	background-color: #111;
+    color: #9c8c03;
 }
 
 .CodeMirror {
@@ -80,7 +121,7 @@ body {
 /* GUTTER */
 
 .CodeMirror-gutters {
-	border-right: 1px solid #ddd;
+	border-right: 1px solid #9c8c03;
 	background-color: #f7f7f7;
 	white-space: nowrap;
 }

@@ -12,18 +12,28 @@
 	<body>
 		<div class="container">
 			<header>
-				<ul>
-					<button onclick="switchStyle('goingForPageLazout.css')">Default</button>
-					<button onclick="switchStyle('pageLayoutLight.css')">Light Mode</button>
-					<button onclick="switchStyle('pageLayoutContrast.css')">High Contrast Mode</button>
-					<button onclick="switchStyle('pageLayout.css')">Spooky Mode</button>
-				</ul>
-
-				<button id="download-btn">Download</button>
-
-				<button id="login-btn">
-					<a href="/login">Sign Up/In</a>
-				</button>
+			  <div class="containerHead">
+			  <img src="/public/Frontend/EditorLayout/Editor_Logo_Web.png" alt="Logo" style="width:10%">				 
+		 		<table>
+					<tr>
+						<td><button onclick="switchStyle('goingForPageLazout.css')">Default</button></td>
+						<td><button onclick="switchStyle('pageLayoutLight.css')">Light Mode</button></td>
+						<td><button onclick="switchStyle('pageLayoutContrast.css')">High Contrast Mode</button></td>
+						<td><button onclick="switchStyle('pageLayout.css')">Spooky Mode</button></td>
+		 			</tr>
+					<tr>
+			  			<td><button onclick="switchStyle('pageLayoutContrast.css')">Forward</button></td>
+			  			<td><button onclick="switchStyle('pageLayout.css')">Backward</button></td>
+						<td><button onclick="switchStyle('pageLayoutContrast.css')">Save work</button></td>
+			  			<td><button id="download-btn">Download</button></td>
+					</tr>
+		  		</table> 
+			  </div>
+			  <td><button onclick="switchStyle('pageLayoutContrast.css')">User</button></td>
+			  <td><button id="login-btn">
+				  <a href="/login">Sign Up/In</a>
+			      </button>
+			  </td>
 			</header>
 
 			<div class="box box-1">
