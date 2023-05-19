@@ -1,4 +1,35 @@
-/* BASICS */
+/*Switch Style Stuff*/
+body.default {
+	--back_body: #111;
+	--front_body: #fff;
+	--borders: #080029;
+	--title_Color: #643dff;
+	--back_body_box: #050125;
+}
+
+body.light {
+	--back_body: #fff;
+	--front_body: #111;
+	--borders: #152ae7;
+	--title_Color: #152ae7;
+	--back_body_box: #5464f1;
+}
+
+body.contrast {
+	--back_body: #111;
+	--front_body: #fff;
+	--borders: #9c8c03;
+}
+
+body.spooky {
+	--back_body: #111;
+	--front_body: #fff;
+	--borders: rgb(145, 0, 0);
+}
+
+
+
+
 /* Style the containers within the grid */
        /* Set up the container for the image and table */
 	   .containerHead {
@@ -23,14 +54,13 @@
         padding: 5px;
       }
 	  
-	  
       /* Set button styles */
       button {
         width: 60px;
         height: 30px;
-        border: 2px solid #9c8c03;
-        background-color: #111;
-        color: #9c8c03;
+        border: 2px solid var(--borders);
+        background-color: var(--back_body);
+        color: var(--front_body);
         font-size: 12px;
       }
       /* Style for the container div */
@@ -53,14 +83,14 @@
 header,
 footer {
 	grid-column: 1 / -1;
-	background-color: #111;
-	color: #9c8c03;
+	background-color: var(--back_body);
+	color: var(--title_Color);
 	padding: 10px;
 }
 
 .box {
-	color: #9c8c03
-	background-color: #111;
+	color: var(--front_body);
+	background-color: var(--back_body);
 	padding: 20px;
 	border-radius: 20px;
 }
@@ -69,18 +99,21 @@ footer {
 .box-1 {
 	grid-column: 1 / 2;
 	grid-row: 2 / 3;
+	border: 3px solid var(--borders);
 }
 
 .box-2 {
 	grid-column: 2 / 3;
 	grid-row: 2 / 3;
-	background-color: #111;
+	background-color: var(--back_body_box);
+	color: var(--title_Color);
 }
 
 .box-3 {
 	grid-column: 3 / 4;
 	grid-row: 2 / 3;
-	background-color: #111;
+	background-color: var(--back_body_box);
+	color: var(--title_Color)
 }
 
 /* This CSS applies to the entire page */
@@ -89,8 +122,8 @@ body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
-	background-color: #111;
-    color: #9c8c03;
+	background-color: var(--back_body);
+    color: var(--borders);
 }
 
 .CodeMirror {
@@ -100,7 +133,7 @@ body {
 	width: 95%;
 	color: #000;
 	direction: ltr;
-	background-color: #111;
+	background-color: var(--back_body);
 }
 
 /* PADDING */
@@ -121,7 +154,7 @@ body {
 /* GUTTER */
 
 .CodeMirror-gutters {
-	border-right: 1px solid #9c8c03;
+	border-right: 1px solid var(--borders);
 	background-color: #f7f7f7;
 	white-space: nowrap;
 }
