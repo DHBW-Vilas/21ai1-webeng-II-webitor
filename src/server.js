@@ -148,6 +148,9 @@ async function transferAnonWorkspaces(req, newAuthTok) {
 app.get('/', (req, res) => {
 	res.sendFile(path.join(publicPath, 'index.html'));
 })
+	.get('/favicon.ico', (req, res) => {
+		res.sendFile(path.join(publicPath, 'logo3.ico'));
+	})
 	.get('/editor', (req, res) => {
 		res.sendFile(path.join(publicPath, 'editor.html'));
 	})
