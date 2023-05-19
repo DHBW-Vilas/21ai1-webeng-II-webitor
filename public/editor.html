@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>CodeMirror HTML Page</title>
+		<link id="style-link" rel="stylesheet" type="text/css" href="/public/editor.css" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+		<script src="/public/switchStyle.js" defer></script>
+		<script src="/public/editor.js" defer></script>
+	</head>
+	<body class="default">
+		<div class="container">
+			<header>
+				<h1>WEBITOR - EDITING PAGE</h1>
+			</header>
+
+			<div class="box box-1">
+				<h2>File Explorer</h2>
+				<div id="file-explorer"></div>
+			</div>
+
+			<div class="box box-2">
+				<h2>Code Editor</h2>
+				<p>
+					<textarea id="editor"></textarea>
+				</p>
+			</div>
+
+			<div class="box box-3">
+				<!--<h2>Console</h2>
+				<p>This one will only exist if we can run code or shell commands.</p>
+				 TODO: Add iframe-->
+
+				<h2>Settings Area</h2>
+				<img src="/public/logo2.png" alt="Logo" style="width: 100%" />
+				<table>
+					<tr>
+						<td><button onclick="switchStyle('default')">Default</button></td>
+						<td><button onclick="switchStyle('light')">Light Mode</button></td>
+					</tr>
+					<tr>
+						<td><button onclick="switchStyle('contrast')">High Contrast Mode</button></td>
+						<td><button onclick="switchStyle('spooky')">Spooky Mode</button></td>
+					</tr>
+					<tr>
+						<td><button onclick="switchStyle('pageLayoutContrast.css')">Save work</button></td>
+						<td><button id="download-btn">Download</button></td>
+					</tr>
+					<tr>
+						<td>
+							<a href="/public/Frontend/HomeLayout/StartPage.html"><button>Home</button></a>
+						</td>
+						<td>
+							<button id="login-btn">
+								<a href="/login">Sign Up/In</a>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>

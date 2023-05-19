@@ -1,7 +1,7 @@
 const process = require('process'); // for accessing environment variables
 const path = require('path'); // for creating correct File-Descriptors on the given OS
 const fs = require('fs/promises'); // for reading uploaded files from tmp dir
-const { existsSync, createReadStream } = require('fs');
+const { existsSync } = require('fs');
 const crypto = require('crypto'); // for generating authentication tokens
 require('dotenv').config({ path: path.join(__dirname, '..', 'config.env'), override: false }); // for loading environment variables from '.env'
 const mongoose = require('mongoose'); // for connecting with MongoDB
@@ -146,10 +146,10 @@ async function transferAnonWorkspaces(req, newAuthTok) {
 
 // Set up Routing
 app.get('/', (req, res) => {
-	res.sendFile(path.join(publicPath, 'Frontend', 'HomeLayout', 'StartPage.html'));
+	res.sendFile(path.join(publicPath, 'index.html'));
 })
 	.get('/editor', (req, res) => {
-		res.sendFile(path.join(publicPath, 'Frontend', 'EditorLayout', 'CodeMirror.html'));
+		res.sendFile(path.join(publicPath, 'editor.html'));
 	})
 	.get('/login', (req, res) => {
 		res.sendFile(path.join(publicPath, 'login.html'));
