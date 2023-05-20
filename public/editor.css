@@ -19,12 +19,16 @@ body.contrast {
 	--back_body: #111;
 	--front_body: #fff;
 	--borders: #9c8c03;
+	--title_Color: #9c8c03;
+	--back_body_box: #352d00;
 }
 
 body.spooky {
 	--back_body: #111;
 	--front_body: #fff;
 	--borders: rgb(145, 0, 0);
+	--title_Color: rgb(145, 0, 0);
+	--back_body_box: #300101;
 }
 
 
