@@ -10,7 +10,9 @@ const { Schema, ObjectId } = mongoose;
 // Schema for each file object in files:
 // _id: Number
 // name: String
-// file: Buffer
+// content: Buffer
+
+// File contents are stored as buffers instead of strings, because we might receive a binary file (that can't be stored as a valid string) in an upload
 
 const workspaceSchema = new Schema(
 	{

@@ -25,6 +25,7 @@ if (!existsSync(tmpDir)) fs.mkdir(tmpDir);
 // Global Read-Only Variables
 const SALT_ROUNDS = 10;
 const MAX_AUTH_TIME = 1000 * 60 * 60 * 12 * 5; // 5 days (in ms)
+const MAX_URL_COOKIE_TIME = 1000 * 60 * 60 * 12 * 2; // 2 days (in ms)
 
 // Global State
 const AUTH_TOKS = {};
@@ -73,7 +74,7 @@ async function checkAuth(req, res, authAsAnon = true) {
 		setAuthCookie(res, authTok);
 	}
 	req.userId = AUTH_TOKS[authTok];
-	res.cookie('url', '');
+	res.cookie('redirectUrl', '');
 	return true;
 }
 
@@ -98,7 +99,7 @@ async function forceAuth(req, res, next) {
 
 function authErrRedirect(err, req, res, next) {
 	if (req.userId === null) {
-		res.cookie('url', req.originalUrl).redirect('/login');
+		res.cookie('redirectUrl', req.originalUrl, { maxAge: MAX_URL_COOKIE_TIME }).redirect('/login');
 	} else {
 		next(err);
 	}
@@ -161,13 +162,13 @@ app.get('/', (req, res) => {
 		let name = req.body.name || null;
 		let pass = req.body.pass || null;
 
-		const newURL = req.cookies['url'] || '/';
-		res.clearCookie('url');
+		const newURL = req.cookies['redirectUrl'] || '/';
+		res.clearCookie('redirectUrl');
 
 		if (!name || !pass) {
 			return res.status(418).json({ success: false, err: 'Invalid Username or Password.' });
 		}
-		if (Buffer.from(pass).byteLength > 72) {
+		if (Buffer.from(pass, 'utf-8').byteLength > 72) {
 			return res.status(418).json({ success: false, err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
 		}
 		if ((await Models.user.exists({ name })) != null) {
@@ -182,13 +183,13 @@ app.get('/', (req, res) => {
 		let name = req.body.name || null;
 		let pass = req.body.pass || null;
 
-		const newURL = req.cookies['url'] || '/';
-		res.clearCookie('url');
+		const newURL = req.cookies['redirectUrl'] || '/';
+		res.clearCookie('redirectUrl');
 
 		if (!name || !pass) {
 			return res.status(418).json({ success: false, err: 'Invalid Username or Password.', url: null });
 		}
-		if (Buffer.from(pass).byteLength > 72) {
+		if (Buffer.from(pass, 'utf-8').byteLength > 72) {
 			return res.status(418).json({ success: false, err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).', url: null });
 		}
 
@@ -209,7 +210,6 @@ app.get('/', (req, res) => {
 	.get('/workspaces', async (req, res) => {
 		if (!(await checkAuth(req, res, true))) return res.json({ success: false, err: 'Not authenticated' });
 		const user = await Models.user.findById(req.userId);
-		console.log({ user });
 		const workspaces = [];
 		for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
 		const anon = await isAnon(req.userId);
@@ -247,7 +247,7 @@ app.get('/', (req, res) => {
 			const root = { name: workspaceName, files: [], dirs: {} };
 			for await (const f of files.file) {
 				const pathParts = f.originalFilename.split('/');
-				const file = { name: pathParts.pop(), file: await fs.readFile(f.filepath), _id: idCounter++ };
+				const file = { name: pathParts.pop(), content: await fs.readFile(f.filepath), _id: idCounter++ };
 				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
 				let parentDir = root;
@@ -310,7 +310,7 @@ app.get('/', (req, res) => {
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
 			const file = ws.findFileById(workspace, req.params.fileId);
-			file.content = Buffer.from(req.body);
+			file.content = Buffer.from(req.body, 'utf-8');
 			await workspace.save();
 			res.json({ success: true });
 		} catch (e) {

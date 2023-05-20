@@ -1,7 +1,7 @@
 const fileExplorerEl = document.getElementById('file-explorer');
 const downloadBtn = document.getElementById('download-btn');
 
-const myEditor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+const editorView = CodeMirror.fromTextArea(document.getElementById('editor'), {
 	lineNumbers: true,
 	mode: 'javascript',
 	//theme: "monokai"
@@ -65,16 +65,22 @@ function saveFile() {
 	fetch('/');
 }
 
+// See this post on why we need this function:
+// https://stackoverflow.com/a/30106551/13764271
+function b64_to_utf8(str) {
+	return decodeURIComponent(escape(atob(str)));
+}
+
 function openFile(file) {
-	tabName = file.name;
-	myEditor.content = file.content;
+	const content = b64_to_utf8(file.content);
+	console.log(content);
 }
 
 function addFileEl(parent, file) {
 	const div = document.createElement('div');
 	div.classList.add('file-explorer-el', 'file-el');
 	div.innerText = file.name;
-	// div.addEventListener('click', (e) => openFile(file));
+	div.addEventListener('click', (e) => openFile(file));
 	parent.insertAdjacentElement('beforeend', div);
 }
 
