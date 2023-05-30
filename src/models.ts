@@ -1,5 +1,26 @@
-const mongoose = require('mongoose');
-const { Schema, ObjectId } = mongoose;
+import mongoose, { ObjectId } from 'mongoose';
+const Schema = mongoose.Schema;
+const ObjectId = mongoose.Types.ObjectId;
+
+export type WSId = ObjectId | number;
+
+export type WSFile = {
+	_id: number;
+	name: string;
+	content: Buffer;
+};
+
+export type WSDir = {
+	_id: WSId;
+	name: string;
+	dirs: WSDir[];
+	files: WSFile[];
+};
+
+export interface Workspace extends WSDir {
+	editors: ObjectId[];
+	idCounter: number;
+}
 
 // Schema for each directory object in dirs:
 // _id: Number
@@ -35,7 +56,7 @@ const userSchema = new Schema(
 	{ timestamps: true }
 );
 
-module.exports = {
+export default {
 	workspace: mongoose.model('workspaceModel', workspaceSchema),
 	user: mongoose.model('userModel', userSchema),
 };

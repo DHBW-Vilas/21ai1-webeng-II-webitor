@@ -1,0 +1,20 @@
+{
+	"include": ["**/*.ts"],
+	"exclude": ["node_modules", "dist", "public"],
+	"compilerOptions": {
+		"lib": ["ES2015", "DOM"],
+		"target": "ES5",
+		"downlevelIteration": true,
+		"strict": true,
+		"noImplicitAny": false,
+		"strictNullChecks": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"moduleResolution": "node",
+		"noUnusedParameters": false,
+		"module": "ES2015",
+		"allowJs": true,
+		"noEmit": false
+	}
+}

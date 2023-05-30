@@ -1,18 +1,18 @@
-const process = require('process'); // for accessing environment variables
-const path = require('path'); // for creating correct File-Descriptors on the given OS
-const fs = require('fs/promises'); // for reading uploaded files from tmp dir
-const { existsSync } = require('fs');
-const crypto = require('crypto'); // for generating authentication tokens
+import process from 'process'; // for accessing environment variables
+import path from 'path'; // for creating correct File-Descriptors on the given OS
+import fs from 'fs/promises'; // for reading uploaded files from tmp dir
+import { existsSync } from 'fs';
+import crypto from 'crypto'; // for generating authentication tokens
 require('dotenv').config({ path: path.join(__dirname, '..', 'config.env'), override: false }); // for loading environment variables from '.env'
-const mongoose = require('mongoose'); // for connecting with MongoDB
-const express = require('express'); // Web-Server Framework, that is being used
+import mongoose from 'mongoose'; // for connecting with MongoDB
+import express from 'express'; // Web-Server Framework, that is being used
 const app = express();
-const cookieParser = require('cookie-parser'); // for parsing cookies
-const bcrypt = require('bcrypt'); // for cryptographically secure password-hashing
-const formidable = require('formidable'); // for uploading files
-const Models = require('./models.js'); // Models for MongoDB
-const ws = require('./workspace.js'); // Utility methods for working with the workspace-directory-tree
-const archiver = require('archiver'); // For archiving workspace in a single zip-file
+import cookieParser from 'cookie-parser'; // for parsing cookies
+import bcrypt from 'bcrypt'; // for cryptographically secure password-hashing
+import formidable from 'formidable'; // for uploading files
+import Models, { WSDir, WSFile, WSId, Workspace } from './models'; // Models for MongoDB
+import ws from './workspace'; // Utility methods for working with the workspace-directory-tree
+import archiver from 'archiver'; // For archiving workspace in a single zip-file
 
 // Shortcut-constants:
 const ENV = process.env;
@@ -30,7 +30,7 @@ const MAX_URL_COOKIE_TIME = 1000 * 60 * 60 * 12 * 2; // 2 days (in ms)
 // Global State
 const AUTH_TOKS = {};
 
-function genRandStr(size = 32, encoding = 'hex') {
+function genRandStr(size = 32, encoding: BufferEncoding = 'hex') {
 	return crypto.randomBytes(size).toString(encoding);
 }
 
@@ -81,7 +81,7 @@ async function checkAuth(req, res, authAsAnon = true) {
 async function isAnon(userId) {
 	return Models.user
 		.findById(userId)
-		.then((user) => user.anon)
+		.then((user) => user?.anon ?? false)
 		.catch((e) => false);
 }
 
@@ -115,7 +115,7 @@ function authErrJSON(obj = {}) {
 	};
 }
 
-async function createUser(name = null, pass = null, anon = name === null || pass === null) {
+async function createUser(name: String | null = null, pass: String | null = null, anon: boolean = name === null || pass === null) {
 	if (!name) name = genRandStr(24, 'utf-8');
 	if (!pass) pass = genRandStr(24, 'utf-8');
 	const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
@@ -135,14 +135,14 @@ async function transferAnonWorkspaces(req, newAuthTok) {
 	const oldUserId = AUTH_TOKS[oldAuthTok];
 	if (!oldUserId) return;
 	const oldUser = await Models.user.findById(oldUserId);
-	if (!oldUser.anon) return;
+	if (!oldUser?.anon) return;
 	const newUserId = AUTH_TOKS[newAuthTok];
 	const newUser = await Models.user.findById(newUserId);
 	for (const wsId of oldUser.workspaces) {
 		Models.workspace.findByIdAndUpdate(wsId, { editors: [newUserId] });
-		newUser.workspaces.push(wsId);
+		newUser?.workspaces.push(wsId);
 	}
-	newUser.save();
+	newUser?.save();
 }
 
 // Set up Routing
@@ -210,8 +210,11 @@ app.get('/', (req, res) => {
 	.get('/workspaces', async (req, res) => {
 		if (!(await checkAuth(req, res, true))) return res.json({ success: false, err: 'Not authenticated' });
 		const user = await Models.user.findById(req.userId);
-		const workspaces = [];
-		for await (const workspaceId of user.workspaces) workspaces.push(await Models.workspace.findById(workspaceId));
+		const workspaces: Workspace[] = [];
+		for await (const workspaceId of user?.workspaces ?? []) {
+			const workspace = await Models.workspace.findById(workspaceId);
+			if (workspace !== null) workspaces.push(workspace as unknown as Workspace);
+		}
 		const anon = await isAnon(req.userId);
 		return res.json({ success: true, workspaces, anon });
 	})
@@ -244,16 +247,24 @@ app.get('/', (req, res) => {
 			if (err) throw err;
 
 			let idCounter = 0;
-			const root = { name: workspaceName, files: [], dirs: {} };
+
+			type tmpWSDir = {
+				_id: WSId | undefined;
+				name: string;
+				dirs: tmpWSDir | Object;
+				files: WSFile[];
+			};
+
+			const root: tmpWSDir = { _id: undefined, name: workspaceName, files: [], dirs: {} };
 			for await (const f of files.file) {
 				const pathParts = f.originalFilename.split('/');
-				const file = { name: pathParts.pop(), content: await fs.readFile(f.filepath), _id: idCounter++ };
+				const file: WSFile = { name: pathParts.pop(), content: await fs.readFile(f.filepath), _id: idCounter++ };
 				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
 				let parentDir = root;
 				for (const dname of pathParts) {
 					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: idCounter++ };
-					parentDir = parentDir.dirs[dname];
+					parentDir = parentDir.dirs[dname] as tmpWSDir;
 				}
 				parentDir.files.push(file);
 			}
@@ -281,7 +292,7 @@ app.get('/', (req, res) => {
 	.get('/download/:workspaceId', async (req, res) => {
 		if (!(await checkAuth(req, res))) return res.status(401).end();
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
-		if (!workspace.editors.includes(req.userId)) return res.status(401).end();
+		if (!workspace?.editors.includes(req.userId)) return res.status(401).end();
 
 		res.setHeader('content-type', 'application/zip, application/octet-stream');
 		res.setHeader('content-disposition', `attachment;filename="${workspace.name}.zip"`);
@@ -295,7 +306,7 @@ app.get('/', (req, res) => {
 		Zipper.on('warning', (w) => console.log({ warning: w }));
 		Zipper.on('error', (e) => console.log({ error: e }));
 		Zipper.pipe(res);
-		ws.archiveDir(Zipper, workspace);
+		ws.archiveDir(Zipper, workspace as unknown as Workspace);
 		Zipper.finalize();
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
@@ -309,9 +320,9 @@ app.get('/', (req, res) => {
 		if (!(await checkAuth(req, res, false))) return res.json({ success: false });
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
-			const file = ws.findFileById(workspace, req.params.fileId);
-			file.content = Buffer.from(req.body, 'utf-8');
-			await workspace.save();
+			const file = ws.findFileById(workspace as unknown as Workspace, req.params.fileId);
+			if (file) file.content = Buffer.from(req.body, 'utf-8');
+			await workspace?.save();
 			res.json({ success: true });
 		} catch (e) {
 			console.error(e);
@@ -322,11 +333,11 @@ app.get('/', (req, res) => {
 		// Delete file / dir with _id == fileOrDirId
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
-			const res = ws.deleteById(workspace, req.params.fileOrDirId);
+			const res = ws.deleteById(workspace as unknown as Workspace, req.params.fileOrDirId);
 			if (!res) {
 				return res.json({ success: false, err: 'File or Directory with ID ' + req.params.fileOrDirId + " doesn't exist" });
 			}
-			await workspace.save();
+			await workspace?.save();
 			res.json({ success: true });
 		} catch (e) {
 			console.error(e);

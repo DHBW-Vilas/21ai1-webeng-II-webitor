@@ -2,10 +2,13 @@
 	"name": "21ai1-webeng-ii-webitor",
 	"version": "1.0.0",
 	"description": "Web-Based Code Editor",
-	"main": "server.js",
+	"main": "dist/server.js",
 	"scripts": {
-		"start": "node src/server.js",
-		"dev": "nodemon src/server.js"
+		"start": "node dist/server.js",
+		"dev": "npm-run-all --parallel watch:build watch:server",
+		"watch:build": "webpack --watch --config webpack.config.js",
+		"watch:server": "nodemon --watch dist",
+		"build": "webpack --config webpack.config.js"
 	},
 	"repository": {
 		"type": "git",
@@ -28,14 +31,29 @@
 		"mongoose": "^7.0.4"
 	},
 	"devDependencies": {
-		"nodemon": "^2.0.22"
+		"@babel/core": "^7.21.8",
+		"@babel/preset-env": "^7.18.9",
+		"@codemirror/lang-javascript": "github:codemirror/lang-javascript",
+		"@types/codemirror": "^5.60.7",
+		"@types/node": "^20.2.5",
+		"babel-loader": "^8.2.5",
+		"codemirror": "^6.0.1",
+		"nodemon": "^2.0.22",
+		"npm-run-all": "^4.1.5",
+		"ts-loader": "^9.4.3",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.0.4",
+		"webpack": "^5.76.0",
+		"webpack-cli": "^4.10.0",
+		"webpack-node-externals": "^3.0.0"
 	},
 	"nodemonConfig": {
 		"verbose": false,
 		"ignore": [
 			"public/**",
 			".vscode/**",
-			"tmp/**"
+			"tmp/**",
+			"src/**"
 		]
 	}
 }
