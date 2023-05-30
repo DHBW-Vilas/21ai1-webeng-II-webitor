@@ -5,7 +5,7 @@ import { existsSync } from 'fs';
 import crypto from 'crypto'; // for generating authentication tokens
 require('dotenv').config({ path: path.join(__dirname, '..', 'config.env'), override: false }); // for loading environment variables from '.env'
 import mongoose from 'mongoose'; // for connecting with MongoDB
-import express from 'express'; // Web-Server Framework, that is being used
+import express, { ErrorRequestHandler, NextFunction, Request, Response } from 'express'; // Web-Server Framework, that is being used
 const app = express();
 import cookieParser from 'cookie-parser'; // for parsing cookies
 import bcrypt from 'bcrypt'; // for cryptographically secure password-hashing
@@ -13,6 +13,12 @@ import formidable from 'formidable'; // for uploading files
 import Models, { WSDir, WSFile, WSId, Workspace } from './models'; // Models for MongoDB
 import ws from './workspace'; // Utility methods for working with the workspace-directory-tree
 import archiver from 'archiver'; // For archiving workspace in a single zip-file
+import { RequestHandler } from 'express-serve-static-core';
+
+type ObjectId = mongoose.Types.ObjectId;
+interface Req extends Request {
+	userId: string | ObjectId | undefined;
+}
 
 // Shortcut-constants:
 const ENV = process.env;
@@ -28,9 +34,9 @@ const MAX_AUTH_TIME = 1000 * 60 * 60 * 12 * 5; // 5 days (in ms)
 const MAX_URL_COOKIE_TIME = 1000 * 60 * 60 * 12 * 2; // 2 days (in ms)
 
 // Global State
-const AUTH_TOKS = {};
+const AUTH_TOKS: { [index: string]: string | ObjectId | undefined } = {};
 
-function genRandStr(size = 32, encoding: BufferEncoding = 'hex') {
+function genRandStr(size: number = 32, encoding: BufferEncoding = 'hex') {
 	return crypto.randomBytes(size).toString(encoding);
 }
 
@@ -54,18 +60,18 @@ app.use(cookieParser(ENV.SECRET));
  * @param {Boolean} inPublicDir Whether the files are assumed to be in the public directory.
  * @returns
  */
-function simpleAuthCheck(fileOnAuth, fileOnErr, inPublicDir = true) {
+function simpleAuthCheck(fileOnAuth: string, fileOnErr: string, inPublicDir: boolean = true) {
 	if (inPublicDir) {
 		fileOnAuth = path.join(publicPath, fileOnAuth);
 		fileOnErr = path.join(publicPath, fileOnErr);
 	}
-	return async (req, res) => {
+	return async (req: Req, res: Response) => {
 		if (await checkAuth(req, res)) res.sendFile(fileOnAuth);
 		else res.sendFile(fileOnErr);
 	};
 }
 
-async function checkAuth(req, res, authAsAnon = true) {
+async function checkAuth(req: Req, res: Response, authAsAnon = true) {
 	let authTok = req.signedCookies['auth'];
 	req.userId = AUTH_TOKS[authTok];
 	if (!AUTH_TOKS[authTok]) {
@@ -78,7 +84,7 @@ async function checkAuth(req, res, authAsAnon = true) {
 	return true;
 }
 
-async function isAnon(userId) {
+async function isAnon(userId: string | ObjectId) {
 	return Models.user
 		.findById(userId)
 		.then((user) => user?.anon ?? false)
@@ -92,12 +98,12 @@ async function rmAnonUsers(before = Date.now() - ANON_USER_LIFETIME) {
 }
 
 // req.userId holds the user ID or an error is raised
-async function forceAuth(req, res, next) {
+async function forceAuth(req: Req, res: Response, next: NextFunction) {
 	if (await checkAuth(req, res, false)) next();
 	else next(new Error('Unauthenticated'));
 }
 
-function authErrRedirect(err, req, res, next) {
+function authErrRedirect(err: ErrorRequestHandler, req: Req, res: Response, next: NextFunction) {
 	if (req.userId === null) {
 		res.cookie('redirectUrl', req.originalUrl, { maxAge: MAX_URL_COOKIE_TIME }).redirect('/login');
 	} else {
@@ -106,7 +112,7 @@ function authErrRedirect(err, req, res, next) {
 }
 
 function authErrJSON(obj = {}) {
-	return (err, req, res, next) => {
+	return (err: ErrorRequestHandler, req: Req, res: Response, next: NextFunction) => {
 		if (req.userId === null) {
 			res.json({ ...obj, ...{ success: false, err: 'Not Authenticated' } });
 		} else {
@@ -115,7 +121,7 @@ function authErrJSON(obj = {}) {
 	};
 }
 
-async function createUser(name: String | null = null, pass: String | null = null, anon: boolean = name === null || pass === null) {
+async function createUser(name: string | null = null, pass: string | null = null, anon: boolean = name === null || pass === null) {
 	if (!name) name = genRandStr(24, 'utf-8');
 	if (!pass) pass = genRandStr(24, 'utf-8');
 	const hashedPass = await bcrypt.hash(pass, SALT_ROUNDS);
@@ -126,11 +132,11 @@ async function createUser(name: String | null = null, pass: String | null = null
 	return authTok;
 }
 
-function setAuthCookie(res, authTok) {
+function setAuthCookie(res: Response, authTok: string) {
 	return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true });
 }
 
-async function transferAnonWorkspaces(req, newAuthTok) {
+async function transferAnonWorkspaces(req: Req, newAuthTok: string) {
 	const oldAuthTok = req.signedCookies['auth'];
 	const oldUserId = AUTH_TOKS[oldAuthTok];
 	if (!oldUserId) return;
@@ -176,7 +182,7 @@ app.get('/', (req, res) => {
 		}
 
 		const authTok = await createUser(name, pass, false);
-		transferAnonWorkspaces(req, authTok);
+		transferAnonWorkspaces(req as Req, authTok);
 		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
 	})
 	.post('/login', async (req, res) => {
@@ -197,33 +203,33 @@ app.get('/', (req, res) => {
 		if (!user) {
 			return res.status(418).json({ err: 'Wrong username.', success: false, url: null });
 		}
-		const cmpRes = await bcrypt.compare(pass, user.pass);
+		const cmpRes = await bcrypt.compare(pass, user.pass as string);
 		if (!cmpRes) {
 			return res.status(418).json({ err: 'Wrong password.', success: false, url: null });
 		}
 
 		const authTok = genRandStr(32, 'hex');
 		AUTH_TOKS[authTok] = user._id;
-		transferAnonWorkspaces(req, authTok);
+		transferAnonWorkspaces(req as Req, authTok);
 		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
 	})
 	.get('/workspaces', async (req, res) => {
-		if (!(await checkAuth(req, res, true))) return res.json({ success: false, err: 'Not authenticated' });
-		const user = await Models.user.findById(req.userId);
+		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: 'Not authenticated' });
+		const user = await Models.user.findById((req as Req).userId);
 		const workspaces: Workspace[] = [];
 		for await (const workspaceId of user?.workspaces ?? []) {
 			const workspace = await Models.workspace.findById(workspaceId);
 			if (workspace !== null) workspaces.push(workspace as unknown as Workspace);
 		}
-		const anon = await isAnon(req.userId);
+		const anon = await isAnon((req as Req).userId as string);
 		return res.json({ success: true, workspaces, anon });
 	})
-	.post('/create/:workspaceName/:language', [forceAuth, authErrJSON()], async (req, res) => {
+	.post('/create/:workspaceName/:language', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// TODO: Create hello world workspace for the given language
 		console.log(req.params);
 		res.json({ success: false, err: 'Not implemented yet' });
 	})
-	.post('/upload/:workspaceName', [forceAuth, authErrJSON()], async (req, res) => {
+	.post('/upload/:workspaceName', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
@@ -248,17 +254,18 @@ app.get('/', (req, res) => {
 
 			let idCounter = 0;
 
-			type tmpWSDir = {
+			interface tmpWSDir {
 				_id: WSId | undefined;
 				name: string;
-				dirs: tmpWSDir | Object;
+				dirs: { [index: string]: tmpWSDir | undefined };
 				files: WSFile[];
-			};
+			}
 
 			const root: tmpWSDir = { _id: undefined, name: workspaceName, files: [], dirs: {} };
+			if (!Array.isArray(files.file)) files.file = [files.file];
 			for await (const f of files.file) {
-				const pathParts = f.originalFilename.split('/');
-				const file: WSFile = { name: pathParts.pop(), content: await fs.readFile(f.filepath), _id: idCounter++ };
+				const pathParts = (f.originalFilename ?? '').split('/');
+				const file: WSFile = { name: pathParts.pop() as string, content: await fs.readFile(f.filepath), _id: idCounter++ };
 				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
 				let parentDir = root;
@@ -269,30 +276,34 @@ app.get('/', (req, res) => {
 				parentDir.files.push(file);
 			}
 
-			const flattenDir = (dir) => {
-				let subdirIds = Object.values(dir.dirs).map((d) => flattenDir(d));
-				dir.dirs = subdirIds;
-				return dir;
+			const flattenDir = (dir: tmpWSDir): WSDir => {
+				let subdirIds = Object.values(dir.dirs).map((d) => flattenDir(d as tmpWSDir));
+				return {
+					_id: dir._id as WSId,
+					name: dir.name,
+					dirs: subdirIds,
+					files: dir.files,
+				};
 			};
 			flattenDir(root);
 
-			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [req.userId], idCounter });
-			await Models.user.updateOne({ _id: req.userId }, { $push: { workspaces: workspaceDoc._id } });
-			const user = await Models.user.findById(req.userId);
+			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [(req as unknown as Req).userId], idCounter });
+			await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspaceDoc._id } });
+			const user = await Models.user.findById((req as unknown as Req).userId);
 			console.log({ user });
 			res.json({ success: true, id: workspaceDoc._id });
 		});
 	})
 	.post('/empty/workspace', async (req, res) => {
-		if (!(await checkAuth(req, res, true))) return res.json({ success: false });
-		const workspace = await Models.workspace.create({ name: 'Unnamed', dirs: [], files: [], editors: [req.userId] });
-		Models.user.updateOne({ id: req.userId }, { $push: { workspaces: workspace._id } });
+		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false });
+		const workspace = await Models.workspace.create({ name: 'Unnamed', dirs: [], files: [], editors: [(req as unknown as Req).userId] });
+		Models.user.updateOne({ id: (req as unknown as Req).userId }, { $push: { workspaces: workspace._id } });
 		return res.json({ success: true, workspaceId: workspace._id });
 	})
 	.get('/download/:workspaceId', async (req, res) => {
-		if (!(await checkAuth(req, res))) return res.status(401).end();
+		if (!(await checkAuth(req as unknown as Req, res))) return res.status(401).end();
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
-		if (!workspace?.editors.includes(req.userId)) return res.status(401).end();
+		if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.status(401).end();
 
 		res.setHeader('content-type', 'application/zip, application/octet-stream');
 		res.setHeader('content-disposition', `attachment;filename="${workspace.name}.zip"`);
@@ -310,17 +321,17 @@ app.get('/', (req, res) => {
 		Zipper.finalize();
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
-		if (!(await checkAuth(req, res, false))) return res.json({ success: false });
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false });
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
 		res.json({ success: true, root: workspace });
 	})
 	.put('/workspace/file/:workspaceId/:fileId', async (req, res) => {
 		// New File Content should be the body
 		// TODO: Error Handling
-		if (!(await checkAuth(req, res, false))) return res.json({ success: false });
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false });
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
-			const file = ws.findFileById(workspace as unknown as Workspace, req.params.fileId);
+			const file = ws.findFileById(workspace as unknown as Workspace, req.params.fileId as WSId);
 			if (file) file.content = Buffer.from(req.body, 'utf-8');
 			await workspace?.save();
 			res.json({ success: true });
@@ -329,12 +340,12 @@ app.get('/', (req, res) => {
 			res.json({ success: false, err: 'Internal Error' });
 		}
 	})
-	.delete('/workspace/:workspaceId/:fileOrDirId', [forceAuth, authErrJSON()], async (req, res) => {
+	.delete('/workspace/:workspaceId/:fileOrDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// Delete file / dir with _id == fileOrDirId
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
-			const res = ws.deleteById(workspace as unknown as Workspace, req.params.fileOrDirId);
-			if (!res) {
+			const deleted = ws.deleteById(workspace as unknown as Workspace, req.params.fileOrDirId as WSId);
+			if (!deleted) {
 				return res.json({ success: false, err: 'File or Directory with ID ' + req.params.fileOrDirId + " doesn't exist" });
 			}
 			await workspace?.save();
@@ -347,8 +358,8 @@ app.get('/', (req, res) => {
 	// TODO: Decide which API is better to work with for the frontend
 	// 1. /:workspaceId/:parentDirId with body == filename
 	// 2. /:workspaceId with body == path for new file (including filename)
-	.post('/workspace/file/:workspaceId', [forceAuth, authErrJSON()], async (req, res) => {})
-	.post('/workspace/dir/:workspaceId', [forceAuth, authErrJSON()], async (req, res) => {}); // Body contains path for new directory
+	.post('/workspace/file/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {})
+	.post('/workspace/dir/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {}); // Body contains path for new directory
 
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));

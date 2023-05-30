@@ -2,12 +2,12 @@ import mongoose, { ObjectId } from 'mongoose';
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
 
-export type WSId = ObjectId | number;
+export type WSId = ObjectId | number | string;
 
 export type WSFile = {
 	_id: number;
 	name: string;
-	content: Buffer;
+	content: Buffer | string;
 };
 
 export type WSDir = {

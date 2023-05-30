@@ -6,14 +6,14 @@
 		"target": "ES5",
 		"downlevelIteration": true,
 		"strict": true,
-		"noImplicitAny": false,
+		"noImplicitAny": true,
 		"strictNullChecks": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"moduleResolution": "node",
 		"noUnusedParameters": false,
-		"module": "ES2015",
+		"module": "CommonJS",
 		"allowJs": true,
 		"noEmit": false
 	}

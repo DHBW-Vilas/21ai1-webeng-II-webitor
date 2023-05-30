@@ -1,8 +1,9 @@
 import { EditorView, basicSetup } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import { WSDir, WSFile } from '../models';
 
-const fileExplorerEl = document.getElementById('file-explorer');
-const downloadBtn = document.getElementById('download-btn');
+const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
+const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
 
 const editorView = new EditorView({
 	extensions: [basicSetup, javascript()],
@@ -69,16 +70,16 @@ function saveFile() {
 
 // See this post on why we need this function:
 // https://stackoverflow.com/a/30106551/13764271
-function b64_to_utf8(str) {
+function b64_to_utf8(str: string) {
 	return decodeURIComponent(escape(atob(str)));
 }
 
-function openFile(file) {
-	const content = b64_to_utf8(file.content);
+function openFile(file: WSFile) {
+	const content = b64_to_utf8(file.content as string);
 	console.log(content);
 }
 
-function addFileEl(parent, file) {
+function addFileEl(parent: HTMLDivElement, file: WSFile) {
 	const div = document.createElement('div');
 	div.classList.add('file-explorer-el', 'file-el');
 	div.innerText = file.name;
@@ -86,18 +87,18 @@ function addFileEl(parent, file) {
 	parent.insertAdjacentElement('beforeend', div);
 }
 
-function toggleDirEl(dirEl) {
-	// TODO: isOpen is not implemented
-	let isOpen = false;
-	if (isOpen) {
-		dirEl.childNodes.forEach((c) => c.remove());
-	} else {
-		dirEl.dirs.forEach((dir) => addDirEl(dirEl, dir));
-		dirEl.files.forEach((file) => addFileEl(dirEl, file));
-	}
-}
+// function toggleDirEl(dirEl) {
+// 	// TODO: isOpen is not implemented
+// 	let isOpen = false;
+// 	if (isOpen) {
+// 		dirEl.childNodes.forEach((c) => c.remove());
+// 	} else {
+// 		dirEl.dirs.forEach((dir) => addDirEl(dirEl, dir));
+// 		dirEl.files.forEach((file) => addFileEl(dirEl, file));
+// 	}
+// }
 
-function addDirEl(parent, dir) {
+function addDirEl(parent: HTMLDivElement, dir: WSDir) {
 	const div = document.createElement('div');
 	div.innerText = dir.name;
 	// div.addEventListener('click', (e) => toggleDirEl(div));

@@ -13,7 +13,7 @@ export function findFileById(root: WSDir, id: WSId): WSFile | null {
 	return null;
 }
 
-export function findDirById(root: WSDir, id: WSId) {
+export function findDirById(root: WSDir, id: WSId): WSDir | null {
 	if (root._id === id) return root;
 
 	for (const subdir of root.dirs) {
@@ -23,7 +23,7 @@ export function findDirById(root: WSDir, id: WSId) {
 	return null;
 }
 
-export function deleteFileById(root: WSDir, id: WSId) {
+export function deleteFileById(root: WSDir, id: WSId): boolean {
 	let idx = root.files.findIndex((f) => f._id === id);
 	if (idx >= 0) {
 		root.files.splice(idx, 1);
@@ -37,7 +37,7 @@ export function deleteFileById(root: WSDir, id: WSId) {
 	return false;
 }
 
-export function deleteDirById(root: WSDir, id: WSId) {
+export function deleteDirById(root: WSDir, id: WSId): boolean {
 	let idx = root.dirs.findIndex((d) => d._id === id);
 	if (idx >= 0) {
 		root.dirs.splice(idx, 1);
@@ -51,7 +51,7 @@ export function deleteDirById(root: WSDir, id: WSId) {
 	return false;
 }
 
-export function deleteById(root: WSDir, id: WSId) {
+export function deleteById(root: WSDir, id: WSId): boolean {
 	if (deleteFileById(root, id)) return true;
 	else return deleteDirById(root, id);
 }
