@@ -6,6 +6,7 @@
 	"scripts": {
 		"start": "node dist/server.js",
 		"dev": "npm-run-all --parallel watch:build watch:server",
+		"dev:frontend": "npm run build && npm-run-all --parallel start watch:build",
 		"watch:build": "webpack --watch --config webpack.config.js",
 		"watch:server": "nodemon --watch dist",
 		"build": "webpack --config webpack.config.js"

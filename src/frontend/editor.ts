@@ -1,13 +1,20 @@
+import { EditorState } from '@codemirror/state';
 import { EditorView, basicSetup } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { WSDir, WSFile } from '../models';
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
+const editorTextArea = document.getElementById('editor') as HTMLTextAreaElement;
+
+EditorView.baseTheme({
+	'&light .cm-zebraStripe': { backgroundColor: '#d4fafa' },
+	'&dark .cm-zebraStripe': { backgroundColor: '#1a2727' },
+});
 
 const editorView = new EditorView({
 	extensions: [basicSetup, javascript()],
-	parent: document.getElementById('editor') ?? undefined,
+	parent: editorTextArea,
 });
 
 let workspaceId = localStorage.getItem('workspaceId');
@@ -46,7 +53,7 @@ function getWorkspace() {
 		});
 }
 
-downloadBtn?.addEventListener('click', downloadWorkspace);
+downloadBtn.addEventListener('click', downloadWorkspace);
 
 async function downloadWorkspace() {
 	const anchor = document.createElement('a');
@@ -76,7 +83,7 @@ function b64_to_utf8(str: string) {
 
 function openFile(file: WSFile) {
 	const content = b64_to_utf8(file.content as string);
-	console.log(content);
+	editorView.setState(EditorState.create({ doc: content }));
 }
 
 function addFileEl(parent: HTMLDivElement, file: WSFile) {
