@@ -135,10 +135,10 @@ footer {
 	height: 80%;
 }
 
-.CodeMirror {
+.cm-editor {
 	/*  Set height, width, borders, and global font properties here */
 	font-family: monospace;
-	height: 700px;
+	height: 100%;
 	width: 95%;
 	color: #000;
 	direction: ltr;
