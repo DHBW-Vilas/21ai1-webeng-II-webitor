@@ -5,12 +5,12 @@ This website is an online code editor.
 ## Functions
 
 -   [ ] Code Editor
--   [ ] Login
--   [ ] Anonymous Code Editing
+-   [x] Login
+-   [x] Anonymous Code Editing
 -   [ ] Syntax Highlighting for supported languages
--   [ ] Upload Files/Folders
--   [ ] Download edited Files/Folders
--   [ ] Open previously saved workspace
+-   [x] Upload Files/Folders
+-   [x] Download edited Files/Folders
+-   [x] Open previously saved workspace
 
 ### Optional
 
