@@ -7,6 +7,7 @@ export type WSId = ObjectId | string;
 export type WSFile = {
 	_id: WSId;
 	name: string;
+	isTextfile: boolean;
 	content: Buffer | string;
 };
 

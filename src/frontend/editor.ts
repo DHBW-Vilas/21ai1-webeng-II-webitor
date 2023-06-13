@@ -49,7 +49,7 @@ function saveFile() {
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ text: file.content }),
+		body: JSON.stringify({ text: utf8_to_b64(file.content) }),
 	})
 		.then((res) => res.json())
 		.then((res) => {
@@ -104,20 +104,29 @@ async function downloadWorkspace() {
 
 // See this post on why we need this function:
 // https://stackoverflow.com/a/30106551/13764271
-function b64_to_utf8(str: string) {
+function utf8_to_b64(str: string): string {
+	return window.btoa(unescape(encodeURIComponent(str)));
+}
+
+function b64_to_utf8(str: string): string {
 	return decodeURIComponent(escape(atob(str)));
 }
 
 function openFile(file: WSFile) {
 	currentDoc = { name: file.name, id: file._id };
-	const content = b64_to_utf8(file.content as string);
-	editorView.setState(EditorState.create({ doc: content }));
+	if (!file.isTextfile) {
+		// TODO: Error handling
+		console.log('You can only open text files');
+		return;
+	}
+	editorView.setState(EditorState.create({ doc: file.content as string }));
 }
 
 function addFileEl(parent: HTMLDivElement, file: WSFile) {
 	const div = document.createElement('div');
 	div.classList.add('file-explorer-el', 'file-el');
 	div.innerText = file.name;
+	if (file.isTextfile) file.content = b64_to_utf8(file.content as string);
 	div.addEventListener('click', (e) => openFile(file));
 	parent.insertAdjacentElement('beforeend', div);
 }

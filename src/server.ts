@@ -284,7 +284,9 @@ app.get('/', (req, res) => {
 			for await (const f of files.file) {
 				if (!f) continue;
 				const pathParts = (f.originalFilename ?? '').split('/');
-				const file: WSFile = { name: pathParts.pop() as string, content: await fs.readFile(f.filepath), _id: idCounter.toString() };
+				const content = await fs.readFile(f.filepath);
+				const isTextfile = ws.checkIfTextFile(content);
+				const file: WSFile = { name: pathParts.pop() as string, content, isTextfile, _id: idCounter.toString() };
 				idCounter++;
 				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
@@ -314,7 +316,6 @@ app.get('/', (req, res) => {
 
 			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [(req as unknown as Req).userId], idCounter });
 			await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspaceDoc._id } });
-			const user = await Models.user.findById((req as unknown as Req).userId);
 			res.json({ success: true, id: workspaceDoc._id });
 		});
 	})
@@ -356,9 +357,9 @@ app.get('/', (req, res) => {
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
 			const file = ws.findFileById(workspace as unknown as Workspace, req.params.fileId as WSId);
-			if (file) file.content = Buffer.from(req.body.text);
-			await workspace?.save();
-			res.json({ success: true });
+			if (file) file.content = Buffer.from(req.body.text, 'base64');
+			const mongooseRes = await workspace?.updateOne({ files: workspace.files, dirs: workspace.dirs });
+			res.json({ success: mongooseRes.acknowledged });
 		} catch (e) {
 			console.error(e);
 			res.json({ success: false, err: 'Internal Error' });

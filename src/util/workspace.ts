@@ -1,8 +1,15 @@
 import { WSDir, WSFile, WSId } from '../models';
 
-export function findFileById(root: WSDir, id: WSId): WSFile | null {
-	console.log('findFileById: ', { root, id });
+export function checkIfTextFile(buf: Buffer): boolean {
+	try {
+		let s = new String(buf);
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
 
+export function findFileById(root: WSDir, id: WSId): WSFile | null {
 	let res: WSFile | null | undefined = root.files.find((f) => f._id === id);
 	if (res) return res;
 
@@ -57,6 +64,7 @@ export function deleteById(root: WSDir, id: WSId): boolean {
 }
 
 export default {
+	checkIfTextFile,
 	findFileById,
 	findDirById,
 	deleteFileById,
