@@ -2,10 +2,10 @@ import mongoose, { ObjectId } from 'mongoose';
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
 
-export type WSId = ObjectId | number | string;
+export type WSId = ObjectId | string;
 
 export type WSFile = {
-	_id: number;
+	_id: WSId;
 	name: string;
 	content: Buffer | string;
 };
@@ -21,17 +21,6 @@ export interface Workspace extends WSDir {
 	editors: ObjectId[];
 	idCounter: number;
 }
-
-// Schema for each directory object in dirs:
-// _id: Number
-// name: String
-// dirs: [dirObject]
-// files: [fileObject]
-
-// Schema for each file object in files:
-// _id: Number
-// name: String
-// content: Buffer
 
 // File contents are stored as buffers instead of strings, because we might receive a binary file (that can't be stored as a valid string) in an upload
 

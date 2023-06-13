@@ -11,9 +11,27 @@ import cookieParser from 'cookie-parser'; // for parsing cookies
 import bcrypt from 'bcrypt'; // for cryptographically secure password-hashing
 import formidable from 'formidable'; // for uploading files
 import Models, { WSDir, WSFile, WSId, Workspace } from './models'; // Models for MongoDB
-import ws from './workspace'; // Utility methods for working with the workspace-directory-tree
+import ws from './util/workspace'; // Utility methods for working with the workspace-directory-tree
 import archiver from 'archiver'; // For archiving workspace in a single zip-file
 import { RequestHandler } from 'express-serve-static-core';
+
+import { join } from 'path';
+import { Archiver } from 'archiver';
+/**
+ * @param {archiver.Archiver} Archiver The Archiver used to archive the directory
+ * @param {*} dir The workspace directory to archive
+ * @param {String} path The path from the workspace root to this directory
+ */
+function archiveDir(Archiver: Archiver, dir: WSDir, path: string = '/') {
+	for (const file of dir.files) {
+		// @performance
+		// There must be a better way than to convert the binary blob into a string and then back into a binary buffer
+		Archiver.append(Buffer.from(file.content.toString(), 'utf-8'), { name: join(path, file.name) });
+	}
+	for (const d of dir.dirs) {
+		archiveDir(Archiver, d, join(path, dir.name));
+	}
+}
 
 type ObjectId = mongoose.Types.ObjectId;
 interface Req extends Request {
@@ -261,17 +279,20 @@ app.get('/', (req, res) => {
 				files: WSFile[];
 			}
 
-			const root: tmpWSDir = { _id: undefined, name: workspaceName, files: [], dirs: {} };
+			const tmpRoot: tmpWSDir = { _id: undefined, name: workspaceName, files: [], dirs: {} };
 			if (!Array.isArray(files.file)) files.file = [files.file];
 			for await (const f of files.file) {
+				if (!f) continue;
 				const pathParts = (f.originalFilename ?? '').split('/');
-				const file: WSFile = { name: pathParts.pop() as string, content: await fs.readFile(f.filepath), _id: idCounter++ };
+				const file: WSFile = { name: pathParts.pop() as string, content: await fs.readFile(f.filepath), _id: idCounter.toString() };
+				idCounter++;
 				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
-				let parentDir = root;
+				let parentDir = tmpRoot;
 				for (const dname of pathParts) {
-					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: idCounter++ };
+					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: idCounter.toString() };
 					parentDir = parentDir.dirs[dname] as tmpWSDir;
+					idCounter++;
 				}
 				parentDir.files.push(file);
 			}
@@ -285,12 +306,15 @@ app.get('/', (req, res) => {
 					files: dir.files,
 				};
 			};
-			flattenDir(root);
+			const root: WSDir = flattenDir(tmpRoot);
+
+			if (!root.files.length && !root.dirs.length) {
+				return res.json({ success: false, id: null });
+			}
 
 			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [(req as unknown as Req).userId], idCounter });
 			await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspaceDoc._id } });
 			const user = await Models.user.findById((req as unknown as Req).userId);
-			console.log({ user });
 			res.json({ success: true, id: workspaceDoc._id });
 		});
 	})
@@ -317,7 +341,7 @@ app.get('/', (req, res) => {
 		Zipper.on('warning', (w) => console.log({ warning: w }));
 		Zipper.on('error', (e) => console.log({ error: e }));
 		Zipper.pipe(res);
-		ws.archiveDir(Zipper, workspace as unknown as Workspace);
+		archiveDir(Zipper, workspace as unknown as Workspace);
 		Zipper.finalize();
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
@@ -332,7 +356,7 @@ app.get('/', (req, res) => {
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
 			const file = ws.findFileById(workspace as unknown as Workspace, req.params.fileId as WSId);
-			if (file) file.content = Buffer.from(req.body, 'utf-8');
+			if (file) file.content = Buffer.from(req.body.text);
 			await workspace?.save();
 			res.json({ success: true });
 		} catch (e) {

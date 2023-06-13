@@ -1,7 +1,8 @@
 import { EditorState } from '@codemirror/state';
 import { EditorView, basicSetup } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
-import { WSDir, WSFile } from '../models';
+import { WSDir, WSFile, WSId } from '../models';
+import { findFileById } from '../util/workspace';
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
@@ -12,13 +13,50 @@ EditorView.baseTheme({
 	'&dark .cm-zebraStripe': { backgroundColor: '#1a2727' },
 });
 
+type Document = {
+	id: WSId;
+	name: string;
+};
+
+let root: WSDir | null = null;
+let currentDoc: Document | null = null;
+let workspaceId = localStorage.getItem('workspaceId');
+
 const editorView = new EditorView({
 	extensions: [basicSetup, javascript()],
 	parent: editorTextArea,
 });
 
-let workspaceId = localStorage.getItem('workspaceId');
-console.log({ workspaceId });
+document.addEventListener('keydown', (e) => {
+	if (e.ctrlKey && e.key == 's') {
+		e.preventDefault();
+		saveFile();
+	}
+});
+
+function saveFile() {
+	if (currentDoc === null || root === null) return;
+	const file = findFileById(root, currentDoc.id);
+	if (file === null) {
+		// TODO: sensible error handling
+		console.log('File is null - should be unreachable');
+		return;
+	}
+	const state = editorView.state;
+	file.content = state.doc.toString();
+	fetch('/workspace/file/' + workspaceId + '/' + currentDoc.id, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ text: file.content }),
+	})
+		.then((res) => res.json())
+		.then((res) => {
+			console.log({ res });
+		});
+}
+
 if (!workspaceId) {
 	fetch('/empty/workspace', { method: 'POST' })
 		.then((res) => res.json())
@@ -44,8 +82,9 @@ function getWorkspace() {
 						return getWorkspace();
 					});
 			}
-			const root = res.root;
-			addDirEl(fileExplorerEl, root);
+			if (!res.root) throw new Error('Keine gültiges Workspace vom Server erhalten');
+			root = res.root;
+			addDirEl(fileExplorerEl, root!);
 		})
 		.catch((err) => {
 			// TODO: Error Handling
@@ -63,18 +102,6 @@ async function downloadWorkspace() {
 	anchor.remove();
 }
 
-// saveBtn.addEventListener('click', saveFile);
-
-document.addEventListener('keyup', (e) => {
-	if (e.key === 's' && e.ctrlKey) {
-		saveFile();
-	}
-});
-
-function saveFile() {
-	fetch('/');
-}
-
 // See this post on why we need this function:
 // https://stackoverflow.com/a/30106551/13764271
 function b64_to_utf8(str: string) {
@@ -82,6 +109,7 @@ function b64_to_utf8(str: string) {
 }
 
 function openFile(file: WSFile) {
+	currentDoc = { name: file.name, id: file._id };
 	const content = b64_to_utf8(file.content as string);
 	editorView.setState(EditorState.create({ doc: content }));
 }

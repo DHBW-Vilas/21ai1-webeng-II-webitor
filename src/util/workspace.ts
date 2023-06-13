@@ -1,8 +1,8 @@
-import { join } from 'path';
-import { WSDir, WSFile, WSId } from './models';
-import { Archiver } from 'archiver';
+import { WSDir, WSFile, WSId } from '../models';
 
 export function findFileById(root: WSDir, id: WSId): WSFile | null {
+	console.log('findFileById: ', { root, id });
+
 	let res: WSFile | null | undefined = root.files.find((f) => f._id === id);
 	if (res) return res;
 
@@ -56,27 +56,10 @@ export function deleteById(root: WSDir, id: WSId): boolean {
 	else return deleteDirById(root, id);
 }
 
-/**
- * @param {archiver.Archiver} Archiver The Archiver used to archive the directory
- * @param {*} dir The workspace directory to archive
- * @param {String} path The path from the workspace root to this directory
- */
-export function archiveDir(Archiver: Archiver, dir: WSDir, path: string = '/') {
-	for (const file of dir.files) {
-		// @performance
-		// There must be a better way than to convert the binary blob into a string and then back into a binary buffer
-		Archiver.append(Buffer.from(file.content.toString(), 'utf-8'), { name: join(path, file.name) });
-	}
-	for (const d of dir.dirs) {
-		archiveDir(Archiver, d, join(path, dir.name));
-	}
-}
-
 export default {
 	findFileById,
 	findDirById,
 	deleteFileById,
 	deleteDirById,
 	deleteById,
-	archiveDir,
 };
