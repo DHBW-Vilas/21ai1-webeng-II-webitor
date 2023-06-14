@@ -1,8 +1,23 @@
 import { EditorState } from '@codemirror/state';
-import { EditorView, basicSetup } from 'codemirror';
-import { javascript } from '@codemirror/lang-javascript';
-import { WSDir, WSFile, WSId } from '../models';
-import { findFileById } from '../util/workspace';
+import {
+	EditorView,
+	keymap,
+	highlightSpecialChars,
+	drawSelection,
+	highlightActiveLine,
+	dropCursor,
+	rectangularSelection,
+	crosshairCursor,
+	lineNumbers,
+	highlightActiveLineGutter,
+} from '@codemirror/view';
+import { defaultHighlightStyle, syntaxHighlighting, indentOnInput, bracketMatching, foldGutter, foldKeymap } from '@codemirror/language';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
+import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
+import { lintKeymap } from '@codemirror/lint';
+import { getLangExtension } from './lang';
+import { WSDir, WSFile } from '../models';
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const fileExplorerHeader = document.getElementById('file-explorer-header') as HTMLHeadingElement;
@@ -30,6 +45,24 @@ interface DisplayedWSDir extends WSDir {
 }
 
 const editorExtensions = [
+	lineNumbers(),
+	highlightActiveLineGutter(),
+	highlightSpecialChars(),
+	history(),
+	foldGutter(),
+	drawSelection(),
+	dropCursor(),
+	EditorState.allowMultipleSelections.of(true),
+	indentOnInput(),
+	syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+	bracketMatching(),
+	closeBrackets(),
+	autocompletion(),
+	rectangularSelection(),
+	crosshairCursor(),
+	highlightActiveLine(),
+	highlightSelectionMatches(),
+	keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, ...foldKeymap, ...completionKeymap, ...lintKeymap]),
 	EditorView.updateListener.of((update) => {
 		if (!update.docChanged || !openedFile) return;
 		openedFile.isSaved = false;
@@ -39,7 +72,6 @@ const editorExtensions = [
 ];
 
 const editorView = new EditorView({
-	extensions: [basicSetup, javascript()],
 	parent: editorTextArea,
 	state: EditorState.create({
 		extensions: editorExtensions,
@@ -147,6 +179,7 @@ function b64_to_utf8(str: string): string {
 function openFile(file: DisplayedWSFile | null) {
 	openedFile = file;
 	if (file === null) {
+		// TODO: Maybe hide editor?
 		editorView.setState(EditorState.create({ doc: '' }));
 		editorHeader.innerText = 'No File opened';
 	} else if (!file.isTextfile) {
@@ -155,8 +188,15 @@ function openFile(file: DisplayedWSFile | null) {
 		console.log('You can only open text files');
 		return;
 	} else {
+		let fileExt = '';
+		let idx = file.name.lastIndexOf('.');
+		if (idx >= 0) fileExt = file.name.substring(idx + 1);
+
 		editorHeader.innerText = file.name;
-		editorView.setState(EditorState.create({ doc: file.content as string, extensions: editorExtensions }));
+		let exts = editorExtensions;
+		let langExt = getLangExtension(fileExt);
+		if (langExt) exts = [exts, langExt];
+		editorView.setState(EditorState.create({ doc: file.content as string, extensions: exts }));
 	}
 }
 
