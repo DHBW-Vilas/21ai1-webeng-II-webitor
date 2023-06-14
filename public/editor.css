@@ -90,6 +90,7 @@ button {
 
 .unsaved,
 .unsaved > p {
+	/* @Cleanup factor colors into a variable */
 	color: #08f;
 }
 
@@ -128,8 +129,8 @@ button {
 	align-items: center;
 }
 
-/* @Cleanup factor color into variable */
 .file-explorer-el:hover {
+	/* @Cleanup factor colors into variable */
 	background-color: #5555;
 	border: 1px solid rgba(9, 109, 240, 0.548);
 }
