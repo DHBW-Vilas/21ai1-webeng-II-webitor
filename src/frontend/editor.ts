@@ -5,6 +5,7 @@ import { WSDir, WSFile, WSId } from '../models';
 import { findFileById } from '../util/workspace';
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
+const fileExplorerHeader = document.getElementById('file-explorer-header') as HTMLHeadingElement;
 const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
 const editorTextArea = document.getElementById('editor') as HTMLTextAreaElement;
 const editorHeader = document.getElementById('editor-header') as HTMLHeadingElement;
@@ -86,9 +87,10 @@ function getWorkspace() {
 					});
 			}
 			if (!res.root) throw new Error('Keine gültiges Workspace vom Server erhalten');
-			root = res.root;
-			const rootEl = addDirEl(fileExplorerEl, root!);
-			rootEl.id = 'root-el';
+			root = res.root as WSDir;
+			fileExplorerHeader.innerText = root.name;
+			root.dirs.forEach((d) => addDirEl(fileExplorerEl, d, 0));
+			root.files.forEach((f) => addFileEl(fileExplorerEl, f, 0));
 		})
 		.catch((err) => {
 			// TODO: Error Handling
@@ -133,16 +135,25 @@ function openFile(file: WSFile | null) {
 	}
 }
 
-function addFileEl(parent: HTMLDivElement, file: WSFile): HTMLDivElement {
-	const div = document.createElement('div');
-	div.classList.add('file-explorer-el', 'file-el');
+function makeDepthPadEl(): HTMLDivElement {
+	const pad = document.createElement('div');
+	pad.classList.add('file-explorer-depth-pad');
+	return pad;
+}
+
+function addFileEl(parent: HTMLDivElement, file: WSFile, depth: number) {
+	const container = document.createElement('div');
+	container.classList.add('file-explorer-container');
+
+	const fileEl = document.createElement('div');
+	fileEl.classList.add('file-explorer-el', 'file-el');
 
 	let fileIconName = 'binary-file.png';
 	if (file.isTextfile) {
 		file.content = b64_to_utf8(file.content as string);
 		fileIconName = 'text-file.png';
 	}
-	div.addEventListener('click', (e) => openFile(file));
+	fileEl.addEventListener('click', (e) => openFile(file));
 
 	const fileIcon = document.createElement('img');
 	fileIcon.classList.add('icon');
@@ -152,10 +163,11 @@ function addFileEl(parent: HTMLDivElement, file: WSFile): HTMLDivElement {
 	fileName.classList.add('file-name', 'file-explorer-el-name');
 	fileName.innerText = file.name;
 
-	div.appendChild(fileIcon);
-	div.appendChild(fileName);
-	parent.appendChild(div);
-	return div;
+	fileEl.appendChild(fileIcon);
+	fileEl.appendChild(fileName);
+	for (let i = 0; i < depth; i++) container.appendChild(makeDepthPadEl());
+	container.appendChild(fileEl);
+	parent.appendChild(container);
 }
 
 // function toggleDirEl(dirEl) {
@@ -169,9 +181,12 @@ function addFileEl(parent: HTMLDivElement, file: WSFile): HTMLDivElement {
 // 	}
 // }
 
-function addDirEl(parent: HTMLDivElement, dir: WSDir): HTMLDivElement {
-	const div = document.createElement('div');
-	div.classList.add('file-explorer-el', 'folder-el');
+function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number) {
+	const container = document.createElement('div');
+	container.classList.add('file-explorer-container');
+
+	const folderEl = document.createElement('div');
+	folderEl.classList.add('file-explorer-el', 'folder-el');
 
 	const folderIcon = document.createElement('img');
 	folderIcon.classList.add('icon');
@@ -181,12 +196,13 @@ function addDirEl(parent: HTMLDivElement, dir: WSDir): HTMLDivElement {
 	folderName.classList.add('folder-name', 'file-explorer-el-name');
 	folderName.innerText = dir.name;
 
-	// div.addEventListener('click', (e) => toggleDirEl(div));
+	// folder.addEventListener('click', (e) => toggleDirEl(folder));
 
-	div.appendChild(folderIcon);
-	div.appendChild(folderName);
-	dir.dirs.forEach((d) => addDirEl(div, d));
-	dir.files.forEach((f) => addFileEl(div, f));
-	parent.appendChild(div);
-	return div;
+	folderEl.appendChild(folderIcon);
+	folderEl.appendChild(folderName);
+	for (let i = 0; i < depth; i++) container.appendChild(makeDepthPadEl());
+	container.appendChild(folderEl);
+	parent.appendChild(container);
+	dir.dirs.forEach((d) => addDirEl(parent, d, depth + 1));
+	dir.files.forEach((f) => addFileEl(parent, f, depth + 1));
 }

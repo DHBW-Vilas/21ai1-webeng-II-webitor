@@ -96,9 +96,21 @@ button {
 	height: 100vh;
 }
 
+.file-explorer-container {
+	display: flex;
+	justify-content: left;
+}
+
+.file-explorer-depth-pad {
+	width: 10px;
+	height: 100%;
+}
+
 .file-explorer-el {
+	display: inline-block;
 	height: 20px;
-	margin: 5px;
+	width: 100%;
+	margin: 3px;
 	cursor: pointer;
 }
 
