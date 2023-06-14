@@ -1,4 +1,4 @@
-import { WSDir, WSElement, WSFile, Workspace } from '../models';
+import { WSDir, WSElement, WSFile, WSId, Workspace } from '../models';
 
 export interface Res {
 	success: boolean;
@@ -14,8 +14,10 @@ export interface ResCreateWorkspace extends Res {
 
 export interface ResCreateFile extends Res {
 	el: WSFile;
+	workspaceId: string;
 }
 
 export interface ResCreateDir extends Res {
 	el: WSDir;
+	workspaceId: string;
 }

@@ -388,6 +388,7 @@ function addNew<T extends WSElement>(parent: HTMLDivElement, parentDir: Displaye
 						console.log({ res });
 						return;
 					}
+					localStorage.setItem('workspaceId', res.workspaceId);
 					onChange(el, res.el as unknown as T);
 				});
 		}

@@ -407,8 +407,14 @@ app.get('/', (req, res) => {
 			};
 			parentDir.files.push(file);
 			workspace.isNew = true;
-			let x = await workspace.save();
-			return res.json({ success: true, el: file });
+			const x = await workspace.save();
+			const user = await Models.user.findById((req as unknown as Req).userId);
+			if (!user) return res.json({ success: false, err: 'Internal Error' }); // Should be unreachable
+			let wsIdx = user.workspaces.findIndex((workspace) => ws.idEquals(req.params.workspaceId, (workspace as Workspace)._id));
+			user.workspaces.splice(wsIdx, 1, x as any);
+			await user.save();
+			await Models.workspace.findByIdAndDelete(req.params.workspaceId);
+			return res.json({ success: true, el: file, workspaceId: x._id.toString() });
 		} catch (e) {
 			res.json({ success: false, err: 'Internal Error' });
 		}
@@ -429,7 +435,13 @@ app.get('/', (req, res) => {
 			parentDir.dirs.push(dir);
 			workspace.isNew = true;
 			const x = await workspace.save();
-			return res.json({ success: true, el: dir });
+			const user = await Models.user.findById((req as unknown as Req).userId);
+			if (!user) return res.json({ success: false, err: 'Internal Error' }); // Should be unreachable
+			let wsIdx = user.workspaces.findIndex((workspace) => ws.idEquals(req.params.workspaceId, (workspace as Workspace)._id));
+			user.workspaces.splice(wsIdx, 1, x as any);
+			await user.save();
+			await Models.workspace.findByIdAndDelete(req.params.workspaceId);
+			return res.json({ success: true, el: dir, workspaceId: x._id.toString() });
 		} catch (e) {
 			res.json({ success: false, err: 'Internal Error' });
 		}
