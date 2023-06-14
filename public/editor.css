@@ -88,6 +88,10 @@ button {
 	height: 100vh;
 }
 
+.hidden {
+	display: none !important;
+}
+
 .container {
 	display: grid;
 	grid-gap: 10px;
@@ -114,15 +118,15 @@ button {
 	cursor: pointer;
 }
 
-/* @Cleanup factor color into variable */
-.file-el:hover {
-	background-color: #5555;
-	border: 1px solid rgba(9, 109, 240, 0.548);
-}
-
-.file-el {
+.file-explorer-el {
 	display: flex;
 	align-items: center;
+}
+
+/* @Cleanup factor color into variable */
+.file-explorer-el:hover {
+	background-color: #5555;
+	border: 1px solid rgba(9, 109, 240, 0.548);
 }
 
 .file-explorer-el-name {

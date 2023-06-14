@@ -15,12 +15,26 @@ EditorView.baseTheme({
 	'&dark .cm-zebraStripe': { backgroundColor: '#1a2727' },
 });
 
+interface DisplayedWSFile extends WSFile {
+	isSaved: boolean;
+	modifiedContent: string | null;
+	el: HTMLDivElement | null;
+}
+
+interface DisplayedWSDir extends WSDir {
+	isOpen: boolean;
+	el: HTMLDivElement | null;
+	icon: HTMLImageElement | null;
+	files: DisplayedWSFile[];
+	dirs: DisplayedWSDir[];
+}
+
 type Document = {
 	id: WSId;
 	name: string;
 };
 
-let root: WSDir | null = null;
+let root: DisplayedWSDir | null = null;
 let currentDoc: Document | null = null;
 let workspaceId = localStorage.getItem('workspaceId');
 
@@ -87,10 +101,16 @@ function getWorkspace() {
 					});
 			}
 			if (!res.root) throw new Error('Keine gültiges Workspace vom Server erhalten');
-			root = res.root as WSDir;
+			root = {
+				_id: (res.root as WSDir)._id,
+				name: (res.root as WSDir).name,
+				dirs: (res.root as WSDir).dirs.map((d) => addDirEl(fileExplorerEl, d, 0)),
+				files: (res.root as WSDir).files.map((f) => addFileEl(fileExplorerEl, f, 0)),
+				isOpen: true,
+				el: null,
+				icon: null,
+			};
 			fileExplorerHeader.innerText = root.name;
-			root.dirs.forEach((d) => addDirEl(fileExplorerEl, d, 0));
-			root.files.forEach((f) => addFileEl(fileExplorerEl, f, 0));
 		})
 		.catch((err) => {
 			// TODO: Error Handling
@@ -118,7 +138,7 @@ function b64_to_utf8(str: string): string {
 	return decodeURIComponent(escape(atob(str)));
 }
 
-function openFile(file: WSFile | null) {
+function openFile(file: DisplayedWSFile | null) {
 	if (file === null) {
 		currentDoc = null;
 		editorView.setState(EditorState.create({ doc: '' }));
@@ -141,19 +161,24 @@ function makeDepthPadEl(): HTMLDivElement {
 	return pad;
 }
 
-function addFileEl(parent: HTMLDivElement, file: WSFile, depth: number) {
+function addFileEl(parent: HTMLDivElement, file: WSFile, depth: number): DisplayedWSFile {
 	const container = document.createElement('div');
 	container.classList.add('file-explorer-container');
 
 	const fileEl = document.createElement('div');
 	fileEl.classList.add('file-explorer-el', 'file-el');
 
-	let fileIconName = 'binary-file.png';
-	if (file.isTextfile) {
-		file.content = b64_to_utf8(file.content as string);
-		fileIconName = 'text-file.png';
-	}
-	fileEl.addEventListener('click', (e) => openFile(file));
+	const displayedFile: DisplayedWSFile = {
+		_id: file._id,
+		name: file.name,
+		content: file.isTextfile ? b64_to_utf8(file.content as string) : '',
+		isTextfile: file.isTextfile,
+		el: fileEl,
+		isSaved: true,
+		modifiedContent: null,
+	};
+	let fileIconName = (file.isTextfile ? 'text' : 'binary') + '-file.png';
+	fileEl.addEventListener('click', (e) => openFile(displayedFile));
 
 	const fileIcon = document.createElement('img');
 	fileIcon.classList.add('icon');
@@ -168,20 +193,10 @@ function addFileEl(parent: HTMLDivElement, file: WSFile, depth: number) {
 	for (let i = 0; i < depth; i++) container.appendChild(makeDepthPadEl());
 	container.appendChild(fileEl);
 	parent.appendChild(container);
+	return displayedFile;
 }
 
-// function toggleDirEl(dirEl) {
-// 	// TODO: isOpen is not implemented
-// 	let isOpen = false;
-// 	if (isOpen) {
-// 		dirEl.childNodes.forEach((c) => c.remove());
-// 	} else {
-// 		dirEl.dirs.forEach((dir) => addDirEl(dirEl, dir));
-// 		dirEl.files.forEach((file) => addFileEl(dirEl, file));
-// 	}
-// }
-
-function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number) {
+function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number): DisplayedWSDir {
 	const container = document.createElement('div');
 	container.classList.add('file-explorer-container');
 
@@ -196,13 +211,35 @@ function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number) {
 	folderName.classList.add('folder-name', 'file-explorer-el-name');
 	folderName.innerText = dir.name;
 
-	// folder.addEventListener('click', (e) => toggleDirEl(folder));
-
 	folderEl.appendChild(folderIcon);
 	folderEl.appendChild(folderName);
 	for (let i = 0; i < depth; i++) container.appendChild(makeDepthPadEl());
 	container.appendChild(folderEl);
 	parent.appendChild(container);
-	dir.dirs.forEach((d) => addDirEl(parent, d, depth + 1));
-	dir.files.forEach((f) => addFileEl(parent, f, depth + 1));
+
+	const displayedFolder: DisplayedWSDir = {
+		_id: dir._id,
+		name: dir.name,
+		isOpen: true,
+		el: folderEl,
+		icon: folderIcon,
+		dirs: dir.dirs.map((d) => addDirEl(parent, d, depth + 1)),
+		files: dir.files.map((f) => addFileEl(parent, f, depth + 1)),
+	};
+	folderEl.addEventListener('click', (e) => toggleFolder(displayedFolder));
+
+	return displayedFolder;
+}
+
+function toggleFolder(folder: DisplayedWSDir) {
+	if (folder.isOpen) {
+		if (folder.icon) folder.icon.src = '/public/icons/closed-folder.png';
+		folder.dirs.forEach((d) => d.el?.classList.add('hidden'));
+		folder.files.forEach((f) => f.el?.classList.add('hidden'));
+	} else {
+		if (folder.icon) folder.icon.src = '/public/icons/open-folder.png';
+		folder.dirs.forEach((d) => d.el?.classList.remove('hidden'));
+		folder.files.forEach((f) => f.el?.classList.remove('hidden'));
+	}
+	folder.isOpen = !folder.isOpen;
 }

@@ -4,19 +4,19 @@ const ObjectId = mongoose.Types.ObjectId;
 
 export type WSId = ObjectId | string;
 
-export type WSFile = {
+export interface WSFile {
 	_id: WSId;
 	name: string;
 	isTextfile: boolean;
 	content: Buffer | string;
-};
+}
 
-export type WSDir = {
+export interface WSDir {
 	_id: WSId;
 	name: string;
 	dirs: WSDir[];
 	files: WSFile[];
-};
+}
 
 export interface Workspace extends WSDir {
 	editors: ObjectId[];
