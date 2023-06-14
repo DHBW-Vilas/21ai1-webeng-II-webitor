@@ -1,7 +1,8 @@
-import mongoose, { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
 
+export type ObjectId = mongoose.Types.ObjectId;
 export type WSId = ObjectId | string;
 
 export interface WSFile {

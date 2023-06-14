@@ -10,13 +10,14 @@ const app = express();
 import cookieParser from 'cookie-parser'; // for parsing cookies
 import bcrypt from 'bcrypt'; // for cryptographically secure password-hashing
 import formidable from 'formidable'; // for uploading files
-import Models, { WSDir, WSFile, WSId, Workspace } from './models'; // Models for MongoDB
+import Models, { WSDir, WSFile, WSId, Workspace, ObjectId } from './models'; // Models for MongoDB
 import ws from './util/workspace'; // Utility methods for working with the workspace-directory-tree
 import archiver from 'archiver'; // For archiving workspace in a single zip-file
 import { RequestHandler } from 'express-serve-static-core';
 
 import { join } from 'path';
 import { Archiver } from 'archiver';
+import lang, { HelloWorldFn, emptyHelloWorld } from './frontend/lang';
 /**
  * @param {archiver.Archiver} Archiver The Archiver used to archive the directory
  * @param {*} dir The workspace directory to archive
@@ -33,7 +34,10 @@ function archiveDir(Archiver: Archiver, dir: WSDir, path: string = '/') {
 	}
 }
 
-type ObjectId = mongoose.Types.ObjectId;
+function utf8_to_b64(s: string): string {
+	return Buffer.from(s).toString('base64');
+}
+
 interface Req extends Request {
 	userId: string | ObjectId | undefined;
 }
@@ -242,10 +246,20 @@ app.get('/', (req, res) => {
 		const anon = await isAnon((req as Req).userId as string);
 		return res.json({ success: true, workspaces, anon });
 	})
-	.post('/create/:workspaceName/:language', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
-		// TODO: Create hello world workspace for the given language
-		console.log(req.params);
-		res.json({ success: false, err: 'Not implemented yet' });
+	.post('/create/:workspaceName/:languageExt', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
+		const userId = (req as unknown as Req).userId as ObjectId;
+		const workspaceName = req.params.workspaceName;
+		const ext = req.params.languageExt;
+		let helloWorld: HelloWorldFn | null = null;
+		if (ext === 'empty') helloWorld = emptyHelloWorld;
+		else {
+			helloWorld = lang.getLangHelloWorld(ext);
+			if (!helloWorld) return res.json({ success: false, err: 'Unknown Language provided' });
+		}
+
+		const workspace = await Models.workspace.create(helloWorld(workspaceName, [userId], utf8_to_b64));
+		await Models.user.findByIdAndUpdate(userId, { $push: { workspaces: workspace._id } });
+		return res.json({ success: true, workspaceId: workspace._id });
 	})
 	.post('/upload/:workspaceName', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// @performance
@@ -254,7 +268,6 @@ app.get('/', (req, res) => {
 		// The only other way would however be to use something like GridFS,
 		// which apparently allows streamed buffer-upload.
 		// Our files shouldn't be bigger than 16MB though, so using GridFS seems like overkill.
-
 		const workspaceName = req.params.workspaceName;
 		const form = formidable({
 			keepExtensions: true,
@@ -322,7 +335,7 @@ app.get('/', (req, res) => {
 	.post('/empty/workspace', async (req, res) => {
 		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false });
 		const workspace = await Models.workspace.create({ name: 'Unnamed', dirs: [], files: [], editors: [(req as unknown as Req).userId] });
-		Models.user.updateOne({ id: (req as unknown as Req).userId }, { $push: { workspaces: workspace._id } });
+		await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspace._id } });
 		return res.json({ success: true, workspaceId: workspace._id });
 	})
 	.get('/download/:workspaceId', async (req, res) => {

@@ -24,7 +24,7 @@ const frontendConfig = {
 	...config,
 	...{
 		name: 'frontend',
-		entry: { editor: './src/frontend/editor.ts' },
+		entry: { editor: './src/frontend/editor.ts', index: './src/frontend/index.ts' },
 		output: {
 			path: resolve(__dirname, 'public'),
 			filename: '[name].js',
