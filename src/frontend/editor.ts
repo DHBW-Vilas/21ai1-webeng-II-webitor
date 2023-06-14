@@ -7,6 +7,7 @@ import { findFileById } from '../util/workspace';
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
 const editorTextArea = document.getElementById('editor') as HTMLTextAreaElement;
+const editorHeader = document.getElementById('editor-header') as HTMLHeadingElement;
 
 EditorView.baseTheme({
 	'&light .cm-zebraStripe': { backgroundColor: '#d4fafa' },
@@ -33,6 +34,8 @@ document.addEventListener('keydown', (e) => {
 		saveFile();
 	}
 });
+
+openFile(null);
 
 function saveFile() {
 	if (currentDoc === null || root === null) return;
@@ -112,14 +115,21 @@ function b64_to_utf8(str: string): string {
 	return decodeURIComponent(escape(atob(str)));
 }
 
-function openFile(file: WSFile) {
-	currentDoc = { name: file.name, id: file._id };
-	if (!file.isTextfile) {
+function openFile(file: WSFile | null) {
+	if (file === null) {
+		currentDoc = null;
+		editorView.setState(EditorState.create({ doc: '' }));
+		editorHeader.innerText = 'No File opened';
+	} else if (!file.isTextfile) {
 		// TODO: Error handling
+		editorHeader.innerText = file.name;
 		console.log('You can only open text files');
 		return;
+	} else {
+		editorHeader.innerText = file.name;
+		currentDoc = { name: file.name, id: file._id };
+		editorView.setState(EditorState.create({ doc: file.content as string }));
 	}
-	editorView.setState(EditorState.create({ doc: file.content as string }));
 }
 
 function addFileEl(parent: HTMLDivElement, file: WSFile) {
