@@ -31,6 +31,10 @@ body.spooky {
 	--back_body_box: #300101;
 }
 
+* {
+	box-sizing: border-box;
+}
+
 /* This CSS applies to the entire page */
 html,
 body {
@@ -90,6 +94,35 @@ button {
 	grid-template-columns: 1fr 2fr 2fr;
 	grid-template-rows: 1fr 5fr auto;
 	height: 100vh;
+}
+
+.file-explorer-el {
+	height: 20px;
+	margin: 5px;
+	cursor: pointer;
+}
+
+/* @Cleanup factor color into variable */
+.file-el:hover {
+	background-color: #5555;
+	border: 1px solid rgba(9, 109, 240, 0.548);
+}
+
+.file-el {
+	display: flex;
+	align-items: center;
+}
+
+.file-explorer-el-name {
+	padding: 0.2em;
+	font-size: 1.1em;
+	display: inline;
+}
+
+.icon {
+	display: inline-block;
+	height: 100%;
+	width: auto;
 }
 
 /* Style the header and footer */

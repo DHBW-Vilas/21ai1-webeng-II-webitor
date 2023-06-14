@@ -87,7 +87,8 @@ function getWorkspace() {
 			}
 			if (!res.root) throw new Error('Keine gültiges Workspace vom Server erhalten');
 			root = res.root;
-			addDirEl(fileExplorerEl, root!);
+			const rootEl = addDirEl(fileExplorerEl, root!);
+			rootEl.id = 'root-el';
 		})
 		.catch((err) => {
 			// TODO: Error Handling
@@ -132,13 +133,29 @@ function openFile(file: WSFile | null) {
 	}
 }
 
-function addFileEl(parent: HTMLDivElement, file: WSFile) {
+function addFileEl(parent: HTMLDivElement, file: WSFile): HTMLDivElement {
 	const div = document.createElement('div');
 	div.classList.add('file-explorer-el', 'file-el');
-	div.innerText = file.name;
-	if (file.isTextfile) file.content = b64_to_utf8(file.content as string);
+
+	let fileIconName = 'binary-file.png';
+	if (file.isTextfile) {
+		file.content = b64_to_utf8(file.content as string);
+		fileIconName = 'text-file.png';
+	}
 	div.addEventListener('click', (e) => openFile(file));
-	parent.insertAdjacentElement('beforeend', div);
+
+	const fileIcon = document.createElement('img');
+	fileIcon.classList.add('icon');
+	fileIcon.src = '/public/icons/' + fileIconName;
+
+	const fileName = document.createElement('p');
+	fileName.classList.add('file-name', 'file-explorer-el-name');
+	fileName.innerText = file.name;
+
+	div.appendChild(fileIcon);
+	div.appendChild(fileName);
+	parent.appendChild(div);
+	return div;
 }
 
 // function toggleDirEl(dirEl) {
@@ -152,11 +169,24 @@ function addFileEl(parent: HTMLDivElement, file: WSFile) {
 // 	}
 // }
 
-function addDirEl(parent: HTMLDivElement, dir: WSDir) {
+function addDirEl(parent: HTMLDivElement, dir: WSDir): HTMLDivElement {
 	const div = document.createElement('div');
-	div.innerText = dir.name;
+	div.classList.add('file-explorer-el', 'folder-el');
+
+	const folderIcon = document.createElement('img');
+	folderIcon.classList.add('icon');
+	folderIcon.src = '/public/icons/open-folder.png';
+
+	const folderName = document.createElement('p');
+	folderName.classList.add('folder-name', 'file-explorer-el-name');
+	folderName.innerText = dir.name;
+
 	// div.addEventListener('click', (e) => toggleDirEl(div));
+
+	div.appendChild(folderIcon);
+	div.appendChild(folderName);
 	dir.dirs.forEach((d) => addDirEl(div, d));
 	dir.files.forEach((f) => addFileEl(div, f));
-	parent.insertAdjacentElement('beforeend', div);
+	parent.appendChild(div);
+	return div;
 }
