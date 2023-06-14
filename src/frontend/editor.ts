@@ -29,19 +29,26 @@ interface DisplayedWSDir extends WSDir {
 	dirs: DisplayedWSDir[];
 }
 
-type Document = {
-	id: WSId;
-	name: string;
-};
-
-let root: DisplayedWSDir | null = null;
-let currentDoc: Document | null = null;
-let workspaceId = localStorage.getItem('workspaceId');
+const editorExtensions = [
+	EditorView.updateListener.of((update) => {
+		if (!update.docChanged || !openedFile) return;
+		openedFile.isSaved = false;
+		openedFile.modifiedContent = update.state.doc.toString();
+		openedFile.el?.classList.add('unsaved');
+	}),
+];
 
 const editorView = new EditorView({
 	extensions: [basicSetup, javascript()],
 	parent: editorTextArea,
+	state: EditorState.create({
+		extensions: editorExtensions,
+	}),
 });
+
+let root: DisplayedWSDir | null = null;
+let openedFile: DisplayedWSFile | null = null;
+let workspaceId = localStorage.getItem('workspaceId');
 
 document.addEventListener('keydown', (e) => {
 	if (e.ctrlKey && e.key == 's') {
@@ -53,25 +60,24 @@ document.addEventListener('keydown', (e) => {
 openFile(null);
 
 function saveFile() {
-	if (currentDoc === null || root === null) return;
-	const file = findFileById(root, currentDoc.id);
-	if (file === null) {
-		// TODO: sensible error handling
-		console.log('File is null - should be unreachable');
-		return;
-	}
+	if (!openedFile || !openedFile.modifiedContent) return;
 	const state = editorView.state;
-	file.content = state.doc.toString();
-	fetch('/workspace/file/' + workspaceId + '/' + currentDoc.id, {
+	fetch('/workspace/file/' + workspaceId + '/' + openedFile._id, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ text: utf8_to_b64(file.content) }),
+		body: JSON.stringify({ text: utf8_to_b64(openedFile.modifiedContent) }),
 	})
 		.then((res) => res.json())
 		.then((res) => {
 			console.log({ res });
+			if (res.success && openedFile) {
+				openedFile.content = openedFile.modifiedContent ?? '';
+				openedFile.modifiedContent = null;
+				openedFile.isSaved = true;
+				openedFile.el?.classList.remove('unsaved');
+			}
 		});
 }
 
@@ -139,8 +145,8 @@ function b64_to_utf8(str: string): string {
 }
 
 function openFile(file: DisplayedWSFile | null) {
+	openedFile = file;
 	if (file === null) {
-		currentDoc = null;
 		editorView.setState(EditorState.create({ doc: '' }));
 		editorHeader.innerText = 'No File opened';
 	} else if (!file.isTextfile) {
@@ -150,8 +156,7 @@ function openFile(file: DisplayedWSFile | null) {
 		return;
 	} else {
 		editorHeader.innerText = file.name;
-		currentDoc = { name: file.name, id: file._id };
-		editorView.setState(EditorState.create({ doc: file.content as string }));
+		editorView.setState(EditorState.create({ doc: file.content as string, extensions: editorExtensions }));
 	}
 }
 

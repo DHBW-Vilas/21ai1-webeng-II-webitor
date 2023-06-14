@@ -88,6 +88,11 @@ button {
 	height: 100vh;
 }
 
+.unsaved,
+.unsaved > p {
+	color: #08f;
+}
+
 .hidden {
 	display: none !important;
 }
@@ -130,6 +135,7 @@ button {
 }
 
 .file-explorer-el-name {
+	color: inherit;
 	padding: 0.2em;
 	font-size: 1.1em;
 	display: inline;
