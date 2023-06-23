@@ -311,15 +311,15 @@ app.get('/', (req, res) => {
 			}
 
 			const flattenDir = (dir: tmpWSDir): WSDir => {
-				let subdirIds = Object.values(dir.dirs).map((d) => flattenDir(d as tmpWSDir));
+				let subdirs = Object.values(dir.dirs).map((d) => flattenDir(d as tmpWSDir));
 				return {
 					_id: dir._id as WSId,
 					name: dir.name,
-					dirs: subdirIds,
+					dirs: subdirs,
 					files: dir.files,
 				};
 			};
-			const root: WSDir = flattenDir(tmpRoot);
+			const root: WSDir = ws.sortWS(flattenDir(tmpRoot));
 
 			if (!root.files.length && !root.dirs.length) {
 				return res.json({ success: false, id: null });
@@ -399,22 +399,16 @@ app.get('/', (req, res) => {
 			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
 			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
 			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
+			console.log({ parentDir, parentId: req.params.parentDirId });
 			const file = {
 				_id: (workspace.idCounter++).toString(),
 				name: req.body.name,
 				isTextfile: true,
 				content: '',
 			};
-			parentDir.files.push(file);
-			workspace.isNew = true;
-			const x = await workspace.save();
-			const user = await Models.user.findById((req as unknown as Req).userId);
-			if (!user) return res.json({ success: false, err: 'Internal Error' }); // Should be unreachable
-			let wsIdx = user.workspaces.findIndex((workspace) => ws.idEquals(req.params.workspaceId, (workspace as Workspace)._id));
-			user.workspaces.splice(wsIdx, 1, x as any);
-			await user.save();
-			await Models.workspace.findByIdAndDelete(req.params.workspaceId);
-			return res.json({ success: true, el: file, workspaceId: x._id.toString() });
+			ws.addFile(parentDir, file);
+			const x = await Models.workspace.findByIdAndUpdate(workspace._id, { dirs: workspace.dirs, files: workspace.files });
+			return res.json({ success: true, el: file });
 		} catch (e) {
 			res.json({ success: false, err: 'Internal Error' });
 		}
@@ -426,22 +420,16 @@ app.get('/', (req, res) => {
 			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
 			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
 			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
+			console.log({ parentDir, parentId: req.params.parentDirId });
 			const dir = {
 				_id: (workspace.idCounter++).toString(),
 				name: req.body.name,
 				files: [],
 				dirs: [],
 			};
-			parentDir.dirs.push(dir);
-			workspace.isNew = true;
-			const x = await workspace.save();
-			const user = await Models.user.findById((req as unknown as Req).userId);
-			if (!user) return res.json({ success: false, err: 'Internal Error' }); // Should be unreachable
-			let wsIdx = user.workspaces.findIndex((workspace) => ws.idEquals(req.params.workspaceId, (workspace as Workspace)._id));
-			user.workspaces.splice(wsIdx, 1, x as any);
-			await user.save();
-			await Models.workspace.findByIdAndDelete(req.params.workspaceId);
-			return res.json({ success: true, el: dir, workspaceId: x._id.toString() });
+			ws.addDir(parentDir, dir);
+			const x = await Models.workspace.findByIdAndUpdate(workspace._id, { dirs: workspace.dirs });
+			return res.json({ success: true, el: dir });
 		} catch (e) {
 			res.json({ success: false, err: 'Internal Error' });
 		}

@@ -14,10 +14,8 @@ export interface ResCreateWorkspace extends Res {
 
 export interface ResCreateFile extends Res {
 	el: WSFile;
-	workspaceId: string;
 }
 
 export interface ResCreateDir extends Res {
 	el: WSDir;
-	workspaceId: string;
 }

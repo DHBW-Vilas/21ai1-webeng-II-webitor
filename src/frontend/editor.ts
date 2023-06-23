@@ -18,7 +18,7 @@ import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } 
 import { lintKeymap } from '@codemirror/lint';
 import { getLangExtension } from './lang';
 import { WSDir, WSElement, WSFile, Workspace } from '../models';
-import { isValidName } from '../util/workspace';
+import { idxOfDir, isValidName } from '../util/workspace';
 import { ResCreateDir, ResCreateFile } from '../util/endpoints';
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
@@ -151,17 +151,19 @@ function getWorkspace() {
 			root = {
 				_id: (res.root as WSDir)._id,
 				name: (res.root as WSDir).name,
-				dirs: (res.root as WSDir).dirs.map((d) => addDirEl(fileExplorerEl, d, 0)),
-				files: (res.root as WSDir).files.map((f) => addFileEl(fileExplorerEl, f, 0)),
+				dirs: [],
+				files: [],
 				idCounter: (res.root as Workspace).idCounter,
 				isOpen: true,
 				el: null,
 				icon: null,
 				depth: 0,
 			};
+			root.dirs = (res.root as WSDir).dirs.map((d, i) => addDirEl(root!, -1, d, 0));
+			root.files = (res.root as WSDir).files.map((f, i) => addFileEl(root!, -1, f, 0));
 			fileExplorerHeader.innerText = root.name;
-			newFileIcon.addEventListener('click', (ev) => newFile(fileExplorerEl, root!));
-			newFolderIcon.addEventListener('click', (ev) => newFolder(fileExplorerEl, root!));
+			newFileIcon.addEventListener('click', (ev) => newFile(root!));
+			newFolderIcon.addEventListener('click', (ev) => newFolder(root!));
 		})
 		.catch((err) => {
 			// TODO: Error Handling
@@ -211,6 +213,7 @@ function openFile(file: DisplayedWSFile | null) {
 		if (langExt) exts = [exts, langExt];
 		editorView.setState(EditorState.create({ doc: file.content as string, extensions: exts }));
 	}
+	editorView.focus();
 }
 
 const FILE_EXPLORER_DEPTH_PAD = 10;
@@ -223,7 +226,8 @@ type AddFileExplorerElRes<T extends HTMLElement, S> = {
 };
 
 function addFileExplorerEl<T extends HTMLElement, S>(
-	parent: HTMLDivElement,
+	parentDir: DisplayedWSDir | null,
+	offsetFromParent: number,
 	iconName: string,
 	depth: number,
 	makeEl: () => T,
@@ -252,7 +256,13 @@ function addFileExplorerEl<T extends HTMLElement, S>(
 	innerLeft.style.left = depth * FILE_EXPLORER_DEPTH_PAD + 'px';
 	outer.appendChild(innerLeft);
 	outer.appendChild(innerRight);
-	parent.appendChild(outer);
+
+	if (parentDir === null || parentDir.el === null) {
+		fileExplorerEl.appendChild(outer);
+	} else {
+		if (offsetFromParent < 0 || offsetFromParent >= fileExplorerEl.childNodes.length) fileExplorerEl.appendChild(outer);
+		fileExplorerEl.insertBefore(outer, fileExplorerEl.childNodes[offsetFromParent]);
+	}
 
 	const res: AddFileExplorerElRes<T, S> = { container: outer, icon: iconEl, el, state: undefined };
 	res.state = makeState(res);
@@ -261,9 +271,10 @@ function addFileExplorerEl<T extends HTMLElement, S>(
 	return res;
 }
 
-function addFileEl(parent: HTMLDivElement, file: WSFile, depth: number): DisplayedWSFile {
+function addFileEl(parent: DisplayedWSDir, offsetFromParent: number, file: WSFile, depth: number): DisplayedWSFile {
 	return addFileExplorerEl(
 		parent,
+		offsetFromParent,
 		(file.isTextfile ? 'text' : 'binary') + '-file.png',
 		depth,
 		() => {
@@ -293,9 +304,10 @@ function addFileEl(parent: HTMLDivElement, file: WSFile, depth: number): Display
 	).state as DisplayedWSFile;
 }
 
-function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number): DisplayedWSDir {
+function addDirEl(parent: DisplayedWSDir, offsetFromParent: number, dir: WSDir, depth: number): DisplayedWSDir {
 	return addFileExplorerEl(
 		parent,
+		offsetFromParent,
 		'open-folder.png',
 		depth,
 		() => {
@@ -306,8 +318,8 @@ function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number): DisplayedW
 		},
 		({ container, icon }) => {
 			container.classList.add('file-explorer-clickable');
-			const dirs = dir.dirs.map((d) => addDirEl(parent, d, depth + 1));
-			const files = dir.files.map((f) => addFileEl(parent, f, depth + 1));
+			const dirs = dir.dirs.map((d, i) => addDirEl(parent, i, d, depth + 1));
+			const files = dir.files.map((f, i) => addFileEl(parent, dirs.length + i, f, depth + 1));
 			const displayedFolder: DisplayedWSDir = {
 				_id: dir._id,
 				name: dir.name,
@@ -328,7 +340,7 @@ function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number): DisplayedW
 			addFileIcon.classList.add('icon', 'clickable');
 			addFileIcon.addEventListener('click', (ev) => {
 				ev.stopPropagation();
-				newFile(parent, state);
+				newFile(state);
 			});
 
 			const addFolderIcon = document.createElement('img');
@@ -336,7 +348,7 @@ function addDirEl(parent: HTMLDivElement, dir: WSDir, depth: number): DisplayedW
 			addFolderIcon.classList.add('icon', 'clickable');
 			addFolderIcon.addEventListener('click', (ev) => {
 				ev.stopPropagation();
-				newFolder(parent, state);
+				newFolder(state);
 			});
 
 			return [addFileIcon, addFolderIcon];
@@ -357,22 +369,22 @@ function toggleFolder(folder: DisplayedWSDir) {
 	folder.isOpen = !folder.isOpen;
 }
 
-function addNew<T extends WSElement>(parent: HTMLDivElement, parentDir: DisplayedWSDir, iconName: string, isFile: boolean, onChange: (el: HTMLInputElement, wsEl: T) => void) {
-	const { container, el } = addFileExplorerEl(parent, iconName, parentDir.depth + 1, () => {
+function addNew<T extends WSElement>(parent: DisplayedWSDir, offsetFromParent: number, iconName: string, isFile: boolean, onChange: (el: HTMLInputElement, wsEl: T) => void) {
+	const { container, el } = addFileExplorerEl(parent, offsetFromParent, iconName, parent.depth + 1, () => {
 		const t = document.createElement('input');
 		t.setAttribute('type', 'text');
 		t.classList.add('new-file-explorer-el-input');
 		return t;
 	});
-	el.focus();
-	el.addEventListener('change', (e) => {
-		if (!isValidName(parentDir, el.value)) {
+	const changed = () => {
+		if (!isValidName(parent, el.value)) {
 			// TODO:
 			console.log('Name already taken');
+			container.remove();
 			return;
 		} else {
 			el.disabled = true;
-			let url = '/workspace/' + (isFile ? 'file' : 'dir') + `/${workspaceId}/${parentDir._id}`;
+			let url = '/workspace/' + (isFile ? 'file' : 'dir') + `/${workspaceId}/${parent._id}`;
 			fetch(url, {
 				method: 'POST',
 				headers: {
@@ -388,24 +400,28 @@ function addNew<T extends WSElement>(parent: HTMLDivElement, parentDir: Displaye
 						console.log({ res });
 						return;
 					}
-					localStorage.setItem('workspaceId', res.workspaceId);
 					onChange(el, res.el as unknown as T);
 				});
 		}
+	};
+	el.focus();
+	el.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') container.remove();
+		else if (e.key === 'Enter') changed();
+	});
+	el.addEventListener('focusout', (e) => container.remove());
+	el.addEventListener('change', changed);
+}
+
+function newFile(parent: DisplayedWSDir) {
+	console.log({ parent, idx: idxOfDir(root!, parent._id) });
+	addNew(parent, idxOfDir(root!, parent._id) + 1 + parent.dirs.length, 'text-file.png', true, (el, file) => {
+		addFileEl(parent, idxOfDir(root!, parent._id) + 1 + parent.dirs.length, file as WSFile, parent.depth + 1);
 	});
 }
 
-// @Cleanup newFile and newFolder can be factored into a single function
-function newFile(parent: HTMLDivElement, parentDir: DisplayedWSDir) {
-	addNew(parent, parentDir, 'text-file.png', true, (el, file) => {
-		const displayedFile = addFileEl(parent, file as WSFile, parentDir.depth + 1);
-		parentDir.files.push(displayedFile);
-	});
-}
-
-function newFolder(parent: HTMLDivElement, parentDir: DisplayedWSDir) {
-	addNew(parent, parentDir, 'open-folder.png', false, (el, folder) => {
-		const displayedFolder = addDirEl(parent, folder as WSDir, parentDir.depth + 1);
-		parentDir.dirs.push(displayedFolder);
+function newFolder(parent: DisplayedWSDir) {
+	addNew(parent, idxOfDir(root!, parent._id) + 1, 'open-folder.png', false, (el, folder) => {
+		addDirEl(parent, idxOfDir(root!, parent._id) + 1, folder as WSDir, parent.depth + 1);
 	});
 }
