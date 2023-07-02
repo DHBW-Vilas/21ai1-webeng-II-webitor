@@ -4,15 +4,17 @@ body.default {
 	--front_body: #fff;
 	--borders: #080029;
 	--title_Color: #643dff;
+	--header_Color:#643dff;
 	--back_body_box: #050125;
 }
 
 body.light {
 	--back_body: #fff;
 	--front_body: #111;
-	--borders: #152ae7;
-	--title_Color: #152ae7;
-	--back_body_box: #5464f1;
+	--borders: rgb(61, 79, 93);
+	--title_Color: #8df2ff;
+	--header_Color: rgb(61, 79, 93);
+	--back_body_box: rgb(61, 79, 93);
 }
 
 body.contrast {
@@ -20,6 +22,7 @@ body.contrast {
 	--front_body: #fff;
 	--borders: #9c8c03;
 	--title_Color: #9c8c03;
+	--header_Color: #9c8c03;
 	--back_body_box: #352d00;
 }
 
@@ -28,6 +31,7 @@ body.spooky {
 	--front_body: #fff;
 	--borders: rgb(145, 0, 0);
 	--title_Color: rgb(145, 0, 0);
+	--header_Color:rgb(145, 0, 0);
 	--back_body_box: #300101;
 }
 
@@ -73,8 +77,8 @@ th {
 
 /* Set button styles */
 button {
-	width: 60px;
-	height: 30px;
+	width: 80px;
+	height: 50px;
 	border: 2px solid var(--borders);
 	background-color: var(--back_body);
 	color: var(--front_body);
@@ -101,7 +105,7 @@ button {
 .container {
 	display: grid;
 	grid-gap: 10px;
-	grid-template-columns: 1fr 2fr 2fr;
+	grid-template-columns: 1fr 4fr;
 	grid-template-rows: 1fr 5fr auto;
 	height: 100vh;
 }
@@ -153,7 +157,7 @@ header,
 footer {
 	grid-column: 1 / -1;
 	background-color: var(--back_body);
-	color: var(--title_Color);
+	color: var(--header_Color);
 	padding: 10px;
 }
 
@@ -178,12 +182,6 @@ footer {
 	color: var(--title_Color);
 }
 
-.box-3 {
-	grid-column: 3 / 4;
-	grid-row: 2 / 3;
-	background-color: var(--back_body_box);
-	color: var(--title_Color);
-}
 
 #editor {
 	overflow: visible;
