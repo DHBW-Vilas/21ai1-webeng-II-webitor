@@ -5,16 +5,17 @@ const ObjectId = mongoose.Types.ObjectId;
 export type ObjectId = mongoose.Types.ObjectId;
 export type WSId = ObjectId | string;
 
-export interface WSFile {
+export interface WSElement {
 	_id: WSId;
 	name: string;
+}
+
+export interface WSFile extends WSElement {
 	isTextfile: boolean;
 	content: Buffer | string;
 }
 
-export interface WSDir {
-	_id: WSId;
-	name: string;
+export interface WSDir extends WSElement {
 	dirs: WSDir[];
 	files: WSFile[];
 }

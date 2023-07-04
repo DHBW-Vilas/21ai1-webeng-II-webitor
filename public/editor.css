@@ -110,33 +110,45 @@ button {
 	height: 100vh;
 }
 
+#file-explorer-header-container {
+	height: 15px;
+	margin-bottom: 1em;
+}
+
 .file-explorer-container {
 	display: flex;
-	justify-content: left;
-}
-
-.file-explorer-depth-pad {
-	width: 10px;
-	height: 100%;
-}
-
-.file-explorer-el {
-	display: inline-block;
+	align-items: center;
 	height: 20px;
 	width: 100%;
-	margin: 3px;
+	margin: 4px;
+	position: relative;
+}
+
+.file-explorer-inner-left {
+	position: absolute;
+	left: 0px;
+}
+
+.file-explorer-inner-right {
+	position: absolute;
+	right: 0px;
+}
+
+.file-explorer-inner {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 5px;
+}
+
+.file-explorer-clickable {
 	cursor: pointer;
 }
 
-.file-explorer-el {
-	display: flex;
-	align-items: center;
-}
-
-.file-explorer-el:hover {
+.file-explorer-clickable:hover {
 	/* @Cleanup factor colors into variable */
 	background-color: #5555;
-	border: 1px solid rgba(9, 109, 240, 0.548);
+	/* border: 1px solid rgba(9, 109, 240, 0.548); */
 }
 
 .file-explorer-el-name {
@@ -148,8 +160,13 @@ button {
 
 .icon {
 	display: inline-block;
-	height: 100%;
+	margin: 2px;
+	height: 20px;
 	width: auto;
+}
+
+.clickable:hover {
+	cursor: pointer;
 }
 
 /* Style the header and footer */

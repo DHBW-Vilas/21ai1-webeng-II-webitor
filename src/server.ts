@@ -299,29 +299,27 @@ app.get('/', (req, res) => {
 				const pathParts = (f.originalFilename ?? '').split('/');
 				const content = await fs.readFile(f.filepath);
 				const isTextfile = ws.checkIfTextFile(content);
-				const file: WSFile = { name: pathParts.pop() as string, content, isTextfile, _id: idCounter.toString() };
-				idCounter++;
+				const file: WSFile = { name: pathParts.pop() as string, content, isTextfile, _id: (idCounter++).toString() };
 				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
 
 				let parentDir = tmpRoot;
 				for (const dname of pathParts) {
-					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: idCounter.toString() };
+					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: (idCounter++).toString() };
 					parentDir = parentDir.dirs[dname] as tmpWSDir;
-					idCounter++;
 				}
 				parentDir.files.push(file);
 			}
 
 			const flattenDir = (dir: tmpWSDir): WSDir => {
-				let subdirIds = Object.values(dir.dirs).map((d) => flattenDir(d as tmpWSDir));
+				let subdirs = Object.values(dir.dirs).map((d) => flattenDir(d as tmpWSDir));
 				return {
 					_id: dir._id as WSId,
 					name: dir.name,
-					dirs: subdirIds,
+					dirs: subdirs,
 					files: dir.files,
 				};
 			};
-			const root: WSDir = flattenDir(tmpRoot);
+			const root: WSDir = ws.sortWS(flattenDir(tmpRoot));
 
 			if (!root.files.length && !root.dirs.length) {
 				return res.json({ success: false, id: null });
@@ -333,8 +331,8 @@ app.get('/', (req, res) => {
 		});
 	})
 	.post('/empty/workspace', async (req, res) => {
-		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false });
-		const workspace = await Models.workspace.create({ name: 'Unnamed', dirs: [], files: [], editors: [(req as unknown as Req).userId] });
+		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: 'Unauthenticated' });
+		const workspace = await Models.workspace.create({ name: 'Unnamed', dirs: [], files: [], editors: [(req as unknown as Req).userId], idCounter: 0 });
 		await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspace._id } });
 		return res.json({ success: true, workspaceId: workspace._id });
 	})
@@ -380,6 +378,7 @@ app.get('/', (req, res) => {
 	})
 	.delete('/workspace/:workspaceId/:fileOrDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// Delete file / dir with _id == fileOrDirId
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
 			const deleted = ws.deleteById(workspace as unknown as Workspace, req.params.fileOrDirId as WSId);
@@ -393,11 +392,48 @@ app.get('/', (req, res) => {
 			res.json({ success: false, err: 'Internal Error' });
 		}
 	})
-	// TODO: Decide which API is better to work with for the frontend
-	// 1. /:workspaceId/:parentDirId with body == filename
-	// 2. /:workspaceId with body == path for new file (including filename)
-	.post('/workspace/file/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {})
-	.post('/workspace/dir/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {}); // Body contains path for new directory
+	.post('/workspace/file/:workspaceId/:parentDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
+		try {
+			const workspace = await Models.workspace.findById(req.params.workspaceId);
+			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
+			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
+			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
+			console.log({ parentDir, parentId: req.params.parentDirId });
+			const file = {
+				_id: (workspace.idCounter++).toString(),
+				name: req.body.name,
+				isTextfile: true,
+				content: '',
+			};
+			ws.addFile(parentDir, file);
+			const x = await Models.workspace.findByIdAndUpdate(workspace._id, { dirs: workspace.dirs, files: workspace.files });
+			return res.json({ success: true, el: file });
+		} catch (e) {
+			res.json({ success: false, err: 'Internal Error' });
+		}
+	})
+	.post('/workspace/dir/:workspaceId/:parentDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
+		try {
+			const workspace = await Models.workspace.findById(req.params.workspaceId);
+			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
+			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
+			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
+			console.log({ parentDir, parentId: req.params.parentDirId });
+			const dir = {
+				_id: (workspace.idCounter++).toString(),
+				name: req.body.name,
+				files: [],
+				dirs: [],
+			};
+			ws.addDir(parentDir, dir);
+			const x = await Models.workspace.findByIdAndUpdate(workspace._id, { dirs: workspace.dirs });
+			return res.json({ success: true, el: dir });
+		} catch (e) {
+			res.json({ success: false, err: 'Internal Error' });
+		}
+	});
 
 // Start Server
 app.listen(ENV.PORT, () => console.log(`Server listening on port ${ENV.PORT}...`));
