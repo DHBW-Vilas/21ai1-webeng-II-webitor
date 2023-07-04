@@ -399,7 +399,6 @@ app.get('/', (req, res) => {
 			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
 			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
 			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
-			console.log({ parentDir, parentId: req.params.parentDirId });
 			const file = {
 				_id: (workspace.idCounter++).toString(),
 				name: req.body.name,
@@ -407,7 +406,7 @@ app.get('/', (req, res) => {
 				content: '',
 			};
 			ws.addFile(parentDir, file);
-			const x = await Models.workspace.findByIdAndUpdate(workspace._id, { dirs: workspace.dirs, files: workspace.files });
+			await Models.workspace.findByIdAndUpdate(workspace._id, { idCounter: workspace.idCounter, dirs: workspace.dirs, files: workspace.files });
 			return res.json({ success: true, el: file });
 		} catch (e) {
 			res.json({ success: false, err: 'Internal Error' });
@@ -420,7 +419,6 @@ app.get('/', (req, res) => {
 			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
 			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
 			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
-			console.log({ parentDir, parentId: req.params.parentDirId });
 			const dir = {
 				_id: (workspace.idCounter++).toString(),
 				name: req.body.name,
@@ -428,7 +426,7 @@ app.get('/', (req, res) => {
 				dirs: [],
 			};
 			ws.addDir(parentDir, dir);
-			const x = await Models.workspace.findByIdAndUpdate(workspace._id, { dirs: workspace.dirs });
+			await Models.workspace.findByIdAndUpdate(workspace._id, { idCounter: workspace.idCounter, dirs: workspace.dirs });
 			return res.json({ success: true, el: dir });
 		} catch (e) {
 			res.json({ success: false, err: 'Internal Error' });
