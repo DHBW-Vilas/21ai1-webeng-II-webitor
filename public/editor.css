@@ -4,7 +4,7 @@ body.default {
 	--front_body: #fff;
 	--borders: #080029;
 	--title_Color: #643dff;
-	--header_Color:#643dff;
+	--header_Color: #643dff;
 	--back_body_box: #050125;
 }
 
@@ -31,7 +31,7 @@ body.spooky {
 	--front_body: #fff;
 	--borders: rgb(145, 0, 0);
 	--title_Color: rgb(145, 0, 0);
-	--header_Color:rgb(145, 0, 0);
+	--header_Color: rgb(145, 0, 0);
 	--back_body_box: #300101;
 }
 
@@ -102,12 +102,12 @@ button {
 	display: none !important;
 }
 
-.container {
+#container {
 	display: grid;
 	grid-gap: 10px;
 	grid-template-columns: 1fr 4fr;
 	grid-template-rows: 1fr 5fr auto;
-	height: 100vh;
+	max-height: 100vh;
 }
 
 #file-explorer-header-container {
@@ -152,15 +152,19 @@ button {
 }
 
 .file-explorer-el-name {
+	display: inline-block;
+	vertical-align: middle;
+	line-height: normal;
 	color: inherit;
 	padding: 0.2em;
+	margin: 0;
 	font-size: 1.1em;
-	display: inline;
 }
 
 .icon {
 	display: inline-block;
-	margin: 2px;
+	vertical-align: middle;
+	margin: 0px 2px;
 	height: 20px;
 	width: auto;
 }
@@ -183,6 +187,7 @@ footer {
 	background-color: var(--back_body);
 	padding: 20px;
 	border-radius: 20px;
+	max-height: inherit;
 }
 
 /* Style the individual container items */
@@ -199,11 +204,14 @@ footer {
 	color: var(--title_Color);
 }
 
+#editor-header {
+	margin-top: 0;
+}
 
 #editor {
 	overflow: visible;
 	width: 100%;
-	height: 80%;
+	height: 90%;
 }
 
 .cm-editor {
