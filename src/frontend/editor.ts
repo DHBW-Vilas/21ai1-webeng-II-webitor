@@ -29,9 +29,19 @@ const editorHeader = document.getElementById('editor-header') as HTMLHeadingElem
 const newFileIcon = document.getElementById('new-file-icon') as HTMLImageElement;
 const newFolderIcon = document.getElementById('new-folder-icon') as HTMLImageElement;
 
-EditorView.baseTheme({
-	'&light .cm-zebraStripe': { backgroundColor: '#d4fafa' },
-	'&dark .cm-zebraStripe': { backgroundColor: '#1a2727' },
+function updateBoxHeights() {
+	const container = document.getElementById('container') as HTMLDivElement;
+	const header = document.getElementById('editor-page-header') as HTMLHeadingElement;
+	document.querySelectorAll('.box').forEach((box) => {
+		(box as HTMLDivElement).style.height = container.clientHeight - header.clientHeight + 'px';
+	});
+}
+updateBoxHeights();
+window.addEventListener('resize', updateBoxHeights);
+
+const fixedHeightEditor = EditorView.theme({
+	'&': { height: '300px' },
+	'.cm-scroller': { overflow: 'auto' },
 });
 
 interface DisplayedWSFile extends WSFile {
@@ -71,6 +81,8 @@ const editorExtensions = [
 	crosshairCursor(),
 	highlightActiveLine(),
 	highlightSelectionMatches(),
+	EditorView.lineWrapping,
+	fixedHeightEditor,
 	keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, ...foldKeymap, ...completionKeymap, ...lintKeymap]),
 	EditorView.updateListener.of((update) => {
 		if (!update.docChanged || !openedFile) return;
