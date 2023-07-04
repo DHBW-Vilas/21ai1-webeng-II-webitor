@@ -218,24 +218,13 @@ function openFile(file: DisplayedWSFile | null) {
 
 const FILE_EXPLORER_DEPTH_PAD = 10;
 
-type AddFileExplorerElRes<T extends HTMLElement, S> = {
-	container: HTMLDivElement;
+type FileExplorEl = {
+	outer: HTMLDivElement;
+	innerRight: HTMLDivElement;
 	icon: HTMLImageElement;
-	el: T;
-	state: S | undefined;
 };
 
-function addFileExplorerEl<T extends HTMLElement, S>(
-	parentDir: DisplayedWSDir | null,
-	offsetFromParent: number,
-	iconName: string,
-	depth: number,
-	makeEl: () => T,
-	makeState: ((res: AddFileExplorerElRes<T, S>) => S | undefined) | undefined = undefined,
-	makeOuterEls: ((state: S | undefined) => HTMLElement[]) | undefined = undefined
-): AddFileExplorerElRes<T, S> {
-	if (!makeOuterEls) makeOuterEls = () => [];
-	if (!makeState) makeState = () => undefined;
+function getNewFileExplorerEl<T extends HTMLElement>(iconName: string, depth: number, offsetFromParent: number, el: T): FileExplorEl {
 	const outer = document.createElement('div');
 	outer.classList.add('file-explorer-container');
 
@@ -247,7 +236,6 @@ function addFileExplorerEl<T extends HTMLElement, S>(
 	const iconEl = document.createElement('img');
 	iconEl.classList.add('icon');
 	iconEl.src = '/public/icons/' + iconName;
-	const el = makeEl();
 	el.classList.add('file-explorer-el-name');
 
 	innerLeft.appendChild(iconEl);
@@ -257,103 +245,71 @@ function addFileExplorerEl<T extends HTMLElement, S>(
 	outer.appendChild(innerLeft);
 	outer.appendChild(innerRight);
 
-	if (parentDir === null || parentDir.el === null) {
-		fileExplorerEl.appendChild(outer);
-	} else {
-		if (offsetFromParent < 0 || offsetFromParent >= fileExplorerEl.childNodes.length) fileExplorerEl.appendChild(outer);
-		fileExplorerEl.insertBefore(outer, fileExplorerEl.childNodes[offsetFromParent]);
-	}
-
-	const res: AddFileExplorerElRes<T, S> = { container: outer, icon: iconEl, el, state: undefined };
-	res.state = makeState(res);
-	for (let x of makeOuterEls(res.state)) innerRight.appendChild(x);
-
-	return res;
+	fileExplorerEl.insertBefore(outer, fileExplorerEl.childNodes[offsetFromParent]);
+	return { outer, innerRight, icon: iconEl };
 }
 
 function addFileEl(parent: DisplayedWSDir, offsetFromParent: number, file: WSFile, depth: number): DisplayedWSFile {
-	return addFileExplorerEl(
-		parent,
-		offsetFromParent,
-		(file.isTextfile ? 'text' : 'binary') + '-file.png',
-		depth,
-		() => {
-			const fileName = document.createElement('p');
-			fileName.classList.add('file-name');
-			fileName.innerText = file.name;
-			return fileName;
-		},
-		({ container }) => {
-			container.classList.add('file-explorer-clickable');
-			const displayedFile: DisplayedWSFile = {
-				_id: file._id,
-				name: file.name,
-				content: file.isTextfile ? b64_to_utf8(file.content as string) : '',
-				isTextfile: file.isTextfile,
-				el: container,
-				isSaved: true,
-				modifiedContent: null,
-			};
-			container.addEventListener('click', (e) => openFile(displayedFile));
-			return displayedFile;
-		},
-		(state: DisplayedWSFile | undefined) => {
-			// TODO
-			return [];
-		}
-	).state as DisplayedWSFile;
+	const fileNameEl = document.createElement('p');
+	fileNameEl.classList.add('file-name');
+	fileNameEl.innerText = file.name;
+	const { outer } = getNewFileExplorerEl((file.isTextfile ? 'text' : 'binary') + '-file.png', depth, offsetFromParent, fileNameEl);
+
+	const displayedFile: DisplayedWSFile = {
+		_id: file._id,
+		name: file.name,
+		content: file.isTextfile ? b64_to_utf8(file.content as string) : '',
+		isTextfile: file.isTextfile,
+		el: outer,
+		isSaved: true,
+		modifiedContent: null,
+	};
+	outer.classList.add('file-explorer-clickable');
+	outer.addEventListener('click', (e) => openFile(displayedFile));
+
+	return displayedFile;
 }
 
 function addDirEl(parent: DisplayedWSDir, offsetFromParent: number, dir: WSDir, depth: number): DisplayedWSDir {
-	return addFileExplorerEl(
-		parent,
-		offsetFromParent,
-		'open-folder.png',
+	const folderNameEl = document.createElement('p');
+	folderNameEl.classList.add('folder-name');
+	folderNameEl.innerText = dir.name;
+	const { outer, innerRight, icon } = getNewFileExplorerEl('open-folder.png', depth, offsetFromParent, folderNameEl);
+
+	outer.classList.add('file-explorer-clickable');
+	const dirs = dir.dirs.map((d, i) => addDirEl(parent, i, d, depth + 1));
+	const files = dir.files.map((f, i) => addFileEl(parent, dirs.length + i, f, depth + 1));
+	const displayedFolder: DisplayedWSDir = {
+		_id: dir._id,
+		name: dir.name,
+		isOpen: true,
+		el: outer,
+		icon,
+		dirs,
+		files,
 		depth,
-		() => {
-			const folderName = document.createElement('p');
-			folderName.classList.add('folder-name');
-			folderName.innerText = dir.name;
-			return folderName;
-		},
-		({ container, icon }) => {
-			container.classList.add('file-explorer-clickable');
-			const dirs = dir.dirs.map((d, i) => addDirEl(parent, i, d, depth + 1));
-			const files = dir.files.map((f, i) => addFileEl(parent, dirs.length + i, f, depth + 1));
-			const displayedFolder: DisplayedWSDir = {
-				_id: dir._id,
-				name: dir.name,
-				isOpen: true,
-				el: container,
-				icon: icon,
-				dirs,
-				files,
-				depth,
-			};
-			container.addEventListener('click', (e) => toggleFolder(displayedFolder));
-			return displayedFolder;
-		},
-		(state: DisplayedWSDir | undefined) => {
-			if (!state) return []; // Should be unreachable
-			const addFileIcon = document.createElement('img');
-			addFileIcon.src = '/public/icons/new-file.png';
-			addFileIcon.classList.add('icon', 'clickable');
-			addFileIcon.addEventListener('click', (ev) => {
-				ev.stopPropagation();
-				newFile(state);
-			});
+	};
+	outer.addEventListener('click', (e) => toggleFolder(displayedFolder));
 
-			const addFolderIcon = document.createElement('img');
-			addFolderIcon.src = '/public/icons/new-folder.png';
-			addFolderIcon.classList.add('icon', 'clickable');
-			addFolderIcon.addEventListener('click', (ev) => {
-				ev.stopPropagation();
-				newFolder(state);
-			});
+	const addFileIcon = document.createElement('img');
+	addFileIcon.src = '/public/icons/new-file.png';
+	addFileIcon.classList.add('icon', 'clickable');
+	addFileIcon.addEventListener('click', (ev) => {
+		ev.stopPropagation();
+		newFile(displayedFolder);
+	});
+	innerRight.insertAdjacentElement('beforeend', addFileIcon);
 
-			return [addFileIcon, addFolderIcon];
-		}
-	).state as DisplayedWSDir;
+	const addFolderIcon = document.createElement('img');
+	addFolderIcon.src = '/public/icons/new-folder.png';
+	addFolderIcon.classList.add('icon', 'clickable');
+	addFolderIcon.addEventListener('click', (ev) => {
+		ev.stopPropagation();
+		newFolder(displayedFolder);
+	});
+	innerRight.insertAdjacentElement('beforeend', addFolderIcon);
+
+	return displayedFolder;
 }
 
 function toggleFolder(folder: DisplayedWSDir) {
@@ -370,47 +326,48 @@ function toggleFolder(folder: DisplayedWSDir) {
 }
 
 function addNew<T extends WSElement>(parent: DisplayedWSDir, offsetFromParent: number, iconName: string, isFile: boolean, onChange: (el: HTMLInputElement, wsEl: T) => void) {
-	const { container, el } = addFileExplorerEl(parent, offsetFromParent, iconName, parent.depth + 1, () => {
-		const t = document.createElement('input');
-		t.setAttribute('type', 'text');
-		t.classList.add('new-file-explorer-el-input');
-		return t;
-	});
+	console.log({ parent, offsetFromParent });
+
+	const newElInput = document.createElement('input');
+	newElInput.setAttribute('type', 'text');
+	newElInput.classList.add('new-file-explorer-el-input');
+	const { outer } = getNewFileExplorerEl(iconName, parent.depth + 1, offsetFromParent, newElInput);
+
 	const changed = () => {
-		if (!isValidName(parent, el.value)) {
+		if (!isValidName(parent, newElInput.value)) {
 			// TODO:
 			console.log('Name already taken');
-			container.remove();
+			outer.remove();
 			return;
 		} else {
-			el.disabled = true;
+			newElInput.disabled = true;
 			let url = '/workspace/' + (isFile ? 'file' : 'dir') + `/${workspaceId}/${parent._id}`;
 			fetch(url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ name: el.value }),
+				body: JSON.stringify({ name: newElInput.value }),
 			})
 				.then((res) => res.json() as Promise<ResCreateDir | ResCreateFile>)
 				.then((res) => {
-					container.remove();
+					outer.remove();
 					if (!res.success) {
 						// TODO: Error Handling
 						console.log({ res });
 						return;
 					}
-					onChange(el, res.el as unknown as T);
+					onChange(newElInput, res.el as unknown as T);
 				});
 		}
 	};
-	el.focus();
-	el.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape') container.remove();
+	newElInput.focus();
+	newElInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') outer.remove();
 		else if (e.key === 'Enter') changed();
 	});
-	el.addEventListener('focusout', (e) => container.remove());
-	el.addEventListener('change', changed);
+	newElInput.addEventListener('focusout', (e) => outer.remove());
+	newElInput.addEventListener('change', changed);
 }
 
 function newFile(parent: DisplayedWSDir) {
