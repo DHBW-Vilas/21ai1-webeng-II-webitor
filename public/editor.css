@@ -1,64 +1,29 @@
-/*Switch Style Stuff*/
-body.default {
-	--back_body: #111;
-	--borders: #080029;
-	--front_color: #fff;
-	--title_color: #643dff;
-	--header_color: #643dff;
-	--back_body_box: #050125;
-	--editor_gutter_back: #333;
-	--editor_gutter_color: #aaa;
-	--editor_active_back: #777;
-}
-
 body.light {
-	--back_body: #fff;
-	--borders: rgb(61, 79, 93);
-	--front_color: #111;
-	--title_color: #8df2ff;
-	--header_color: rgb(61, 79, 93);
-	--back_body_box: rgb(61, 79, 93);
 	--editor_gutter_back: #eee;
 	--editor_gutter_color: #444;
 	--editor_active_back: #e2f2ff;
 }
 
+body.dark {
+	--editor_gutter_back: #333;
+	--editor_gutter_color: #aaa;
+	--editor_active_back: #777;
+}
+
 body.contrast {
-	--back_body: #111;
-	--borders: #9c8c03;
-	--front_color: #fff;
-	--title_color: #9c8c03;
-	--header_color: #9c8c03;
-	--back_body_box: #352d00;
 	--editor_gutter_back: #333;
 	--editor_gutter_color: #aaa;
 	--editor_active_back: #777;
 }
 
 body.spooky {
-	--back_body: #111;
-	--borders: rgb(145, 0, 0);
-	--front_color: #fff;
-	--title_color: rgb(145, 0, 0);
-	--header_color: rgb(145, 0, 0);
-	--back_body_box: #300101;
 	--editor_gutter_back: #333;
 	--editor_gutter_color: #aaa;
 	--editor_active_back: #777;
 }
 
-* {
-	box-sizing: border-box;
-}
-
-/* This CSS applies to the entire page */
 html,
 body {
-	height: 100%;
-	margin: 0;
-	padding: 0;
-	background-color: var(--back_body);
-	color: var(--borders);
 	overflow: hidden;
 }
 
@@ -145,9 +110,6 @@ button {
 .file-explorer-inner-right {
 	position: absolute;
 	right: 0px;
-}
-
-.file-explorer-inner-children {
 }
 
 .file-explorer-inner {
