@@ -56,28 +56,29 @@
                 <div id="container">
                     <div class="box create-ws-box">
                         <h2>Create new Workspace</h2>
-                        <label for="newWSName">Name:</label>
-                        <input type="text" id="newWSName" name="newWSName" placeholder="Your Workspace Name">
-                        </br>
-                        <label for="langMenu">Programming Language:</label>
-                        <select id="langMenu" name="langMenu">
-                        </select>
-                        </br>
-                        </br> <button id="newWSBtn">Create</button>
+                        <div class="label-input-container">
+                            <label for="newWSName">Name:</label>
+                            <input type="text" id="newWSName" name="newWSName" placeholder="Your Workspace Name">
+                        </div>
+                        <div class="label-input-container">
+                            <label for="langMenu">Programming Language:</label>
+                            <select id="langMenu" name="langMenu"></select>
+                        </div>
+                        <button class="box-btn" id="newWSBtn">Create</button>
                         </p>
                     </div>
 
                     <div class="box create-ws-box">
                         <h2>Upload local Workspace</h2>
-                        <label for="uploadWSName">Name:</label>
-                        <input type="text" id="uploadWSName" name="uploadWSName" placeholder="Your Workspace Name">
-                        </br>
-                        <div id="drop-area">
-                            <label for="fileInput">Select files:</label>
-                            <input type="file" id="fileInput" name="files[]" multiple webkitdirectory directory>
-                            <!-- <span>or drag and drop files here</span> -->
+                        <div class="label-input-container">
+                            <label for="uploadWSName">Name:</label>
+                            <input type="text" id="uploadWSName" name="uploadWSName" placeholder="Your Workspace Name">
                         </div>
-                        </br> <button id="uploadWSBtn">Upload</button>
+                        <div class="label-input-container">
+                            <label for="file-input">Select files:</label>
+                            <input type="file" id="file-input" name="files[]" multiple webkitdirectory directory>
+                        </div>
+                        <button class="box-btn" id="uploadWSBtn">Upload</button>
                         </p>
                     </div>
 

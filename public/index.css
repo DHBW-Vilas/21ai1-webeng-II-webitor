@@ -10,7 +10,7 @@
 
 .box {
 	color: var(--front_box);
-	background-color: var(--back_box);
+	background-color: var(--back_color);
 	padding: 20px;
 	border-radius: 20px;
 }
@@ -112,7 +112,7 @@
 	margin: 0 0.1em;
 	padding: 0.3em 1em;
 	color: var(--front_body);
-	background: var(--back_body);
+	background: var(--back_color);
 	font-size: 80%;
 }
 
@@ -157,41 +157,31 @@
 }
 
 /*File Upload in box 1*/
-
-/*per Drag and Drop and Selection*/
-#drop-area {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	border: 2px dashed var(--file_borders);
-	padding: 2rem;
-	margin-top: 2rem;
+.label-input-container {
+	margin: 1.5em;
 }
 
-#drop-area.highlight {
-	background-color: var(--box_highlighting);
+.label-input-container label {
+	display: block;
+	margin: 0.5em;
 }
 
-#drop-area span {
-	font-size: 1.2rem;
-	font-weight: bold;
-	color: var(--file_borders);
-	margin-top: 1rem;
+.box-btn {
+	margin: 1.5em;
 }
 
-/*DropDown box 1*/
+/* DropDown box 1 */
 select {
 	padding: 10px;
 	border: 1px solid var(--borders);
 	border-radius: 5px;
 	font-size: 16px;
 	color: var(--front_box);
-	background: var(--back_box);
+	background: var(--back_color);
 }
 
 option {
-	background-color: var(--back_box);
+	background-color: var(--back_color);
 	color: var(--front_box);
 	font-size: 16px;
 }
@@ -202,15 +192,14 @@ select:focus {
 	box-shadow: 0 0 5px var(--box_shadow);
 }
 
-/*Text input for name*/
-
+/* Text input for name */
 input[type='text'] {
 	padding: 10px;
 	border: 1px solid var(--border_dropdown_color);
 	border-radius: 5px;
 	font-size: 16px;
 	color: var(--front_box);
-	background-color: var(--back_box);
+	background-color: var(--back_color);
 }
 
 input[type='text']:focus {

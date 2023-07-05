@@ -7,20 +7,20 @@ body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
-	background-color: var(--back_body);
+	background-color: var(--back_color);
 	color: var(--front_color);
 }
 
 body.light {
-	--back_body: #fff;
-	--back_box: #fff;
+	--back_color: #fff;
+	--back_color2: whitesmoke;
 	--back_sidebar: rgb(61, 79, 93);
 	--front_color: #111;
 	--front_sidebar: #8df2ff;
 	--front_box: #111;
 	--title_color: #8df2ff;
 	--borders: rgb(61, 79, 93);
-	--back_body_box: rgb(61, 79, 93);
+	--back_color_box: rgb(61, 79, 93);
 	--file_borders: rgb(61, 79, 93);
 	--drop_highlight: #fff;
 	--box_highlighting: rgba(0, 123, 255, 0.1);
@@ -29,15 +29,15 @@ body.light {
 }
 
 body.dark {
-	--back_body: #111;
-	--back_box: #111;
+	--back_color: #111;
+	--back_color2: #222;
 	--back_sidebar: #080029;
 	--front_color: #fff;
 	--front_sidebar: #fff;
 	--front_box: #fff;
 	--title_color: #643dff;
 	--borders: #080029;
-	--back_body_box: #050125;
+	--back_color_box: #050125;
 	--file_borders: #271e4b;
 	--drop_highlight: #fff;
 	--box_highlighting: rgba(0, 123, 255, 0.1);
@@ -46,15 +46,15 @@ body.dark {
 }
 
 body.contrast {
-	--back_body: #111;
-	--back_box: #111;
+	--back_color: #111;
+	--back_color2: #222;
 	--back_sidebar: #9c8c03;
 	--front_color: #fff;
 	--front_sidebar: #111;
 	--front_box: #fff;
 	--title_color: #9c8c03;
 	--borders: #9c8c03;
-	--back_body_box: #352d00;
+	--back_color_box: #352d00;
 	--file_borders: #9c8c03;
 	--drop_highlight: #fff;
 	--box_highlighting: rgba(255, 230, 0, 0.1);
@@ -63,15 +63,15 @@ body.contrast {
 }
 
 body.spooky {
-	--back_body: #111;
-	--back_box: #111;
+	--back_color: #111;
+	--back_color2: #222;
 	--back_sidebar: rgb(145, 0, 0);
 	--front_color: #fff;
 	--front_sidebar: #111;
 	--front_box: #fff;
 	--title_color: rgb(145, 0, 0);
 	--borders: rgb(145, 0, 0);
-	--back_body_box: #300101;
+	--back_color_box: #300101;
 	--file_borders: rgb(145, 0, 0);
 	--drop_highlight: #fff;
 	--box_highlighting: rgba(255, 0, 0, 0.1);
@@ -122,6 +122,15 @@ body.spooky {
 
 .clickable:hover {
 	cursor: pointer;
+}
+
+button {
+	font-size: 1em;
+	padding: 0.6em;
+	color: var(--front_color);
+	background-color: var(--back_color2);
+	border: 2px solid var(--borders);
+	border-radius: 5px;
 }
 
 button:hover {
