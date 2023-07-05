@@ -35,33 +35,6 @@ body {
 	justify-content: center;
 }
 
-/* Set the width of the image and the table */
-img,
-table {
-	width: 50%;
-}
-
-/* Remove borders and spacing from the table */
-table {
-	border-collapse: collapse;
-	margin-left: 10px;
-}
-
-td,
-th {
-	border: none;
-	padding: 5px;
-}
-
-/* Set button styles */
-button {
-	width: 80px;
-	height: 50px;
-	border: 2px solid var(--borders);
-	background-color: var(--back_color);
-	font-size: 12px;
-	color: var(--front_color);
-}
 /* Style for the container div */
 .button-container {
 	display: flex;

@@ -5,22 +5,25 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<script src="/public/login.js" defer></script>
-		<link rel="stylesheet" href="/public/common.css">
-		<link rel="stylesheet" type="text/css" href="/public/loginLayout.css">
+		<link rel="stylesheet" href="/public/common.css" />
+		<link rel="stylesheet" type="text/css" href="/public/login.css" />
 		<title>Registration - Webitor</title>
 	</head>
-	<body>
+	<body class="light">
 		<div class="container">
 			<h1>Login/Register</h1>
-		  <div id="form">
-			<label for="name">Username:</label>
-			<input type="text" name="name" id="name-input" />
-			<label for="pass">Password:</label>
-			<input type="password" name="pass" id="pass-input" />
-			<button type="submit" id="register-btn">Register</button>
-			<button type="submit" id="login-btn">Login</button>
-
+			<div class="label-input-container">
+				<label for="name">Username:</label>
+				<input type="text" name="name" id="name-input" />
+			</div>
+			<div class="label-input-container">
+				<label for="pass">Password:</label>
+				<input type="password" name="pass" id="pass-input" />
+			</div>
+			<div id="button-container">
+				<button type="submit" id="register-btn">Register</button>
+				<button type="submit" id="login-btn">Login</button>
+			</div>
 		</div>
 	</body>
 </html>
-

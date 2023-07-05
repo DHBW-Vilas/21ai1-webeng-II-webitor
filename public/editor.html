@@ -12,25 +12,16 @@
 		<div id="container">
 			<header id="editor-page-header">
 				<h1><a class="invisible-link" href="/">WEBITOR - EDITING PAGE</a></h1>
-				<h2>Settings Area</h2>
-				<table>
-					<tr>
-						<td><button onclick="switchStyle('light')">Light Mode</button></td>
-						<td><button onclick="switchStyle('dark')">Dark Mode</button></td>
-						<td><button onclick="switchStyle('contrast')">High Contrast Mode</button></td>
-						<td><button onclick="switchStyle('spooky')">Spooky Mode</button></td>
-						<td><button onclick="switchStyle('pageLayoutContrast.css')">Save work</button></td>
-						<td><button id="download-btn">Download</button></td>
-						<td>
-							<a href="/"><button>Home</button></a>
-						</td>
-						<td>
-							<button id="login-btn">
-								<a href="/login">Sign Up/In</a>
-							</button>
-						</td>
-					</tr>
-				</table>
+				<button><a class="invisible-link" href="/">Home</a></button>
+				<select name="style-selector" id="style-selector">
+					<option value="light">Light Mode</option>
+					<option value="ddark">Dark Mode</option>
+					<option value="contrast">High Contrast Mode</option>
+					<option value="spooky">Spooky Mode</option>
+				</select>
+				<button onclick="switchStyle('pageLayoutContrast.css')">Save work</button>
+				<button id="download-btn">Download</button>
+				<button id="login-btn"><a class="invisible-link" href="/login">Sign Up/In</a></button>
 			</header>
 
 			<div class="box box-1">

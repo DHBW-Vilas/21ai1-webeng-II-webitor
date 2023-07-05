@@ -128,11 +128,54 @@ button {
 	font-size: 1em;
 	padding: 0.6em;
 	color: var(--front_color);
-	background-color: var(--back_color2);
-	border: 2px solid var(--borders);
+	background-color: var(--back_color);
+	border: 1px solid var(--borders);
 	border-radius: 5px;
+	width: max-content;
 }
 
 button:hover {
 	cursor: pointer;
+}
+
+select {
+	padding: 10px;
+	border: 1px solid var(--borders);
+	border-radius: 5px;
+	font-size: 16px;
+	color: var(--front_box);
+	background: var(--back_color);
+}
+
+option {
+	background-color: var(--back_color);
+	color: var(--front_box);
+	font-size: 16px;
+}
+
+select:focus {
+	outline: none;
+	border-color: var(--border_dropdown_color);
+	box-shadow: 0 0 5px var(--box_shadow);
+}
+
+select:hover {
+	cursor: pointer;
+}
+
+input[type='text'],
+input[type='password'] {
+	padding: 10px;
+	border: 1px solid var(--border_dropdown_color);
+	border-radius: 5px;
+	font-size: 16px;
+	color: var(--front_box);
+	background-color: var(--back_color);
+}
+
+input[type='text']:focus,
+input[type='password']:focus {
+	outline: none;
+	border-color: var(--border_dropdown_color);
+	box-shadow: 0 0 5px var(--box_shadow);
 }
