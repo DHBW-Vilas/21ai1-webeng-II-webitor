@@ -376,6 +376,20 @@ app.get('/', (req, res) => {
 			res.json({ success: false, err: 'Internal Error' });
 		}
 	})
+	.delete('/workspace/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
+		// Delete workspace with _id == workspaceId
+		let Req = req as unknown as Req;
+		if (!(await checkAuth(Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
+		try {
+			const workspace = (await Models.workspace.findById(req.params.workspaceId)) as unknown as Workspace;
+			if (!workspace.editors.includes(Req.userId as ObjectId)) return res.json({ success: false, err: 'Unauthorized' });
+			await Models.workspace.findByIdAndDelete(req.params.workspaceId);
+			return res.json({ success: true });
+		} catch (e) {
+			console.error(e);
+			res.json({ success: false, err: 'Internal Error' });
+		}
+	})
 	.delete('/workspace/:workspaceId/:fileOrDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// Delete file / dir with _id == fileOrDirId
 		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });

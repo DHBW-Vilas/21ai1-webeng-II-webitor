@@ -243,7 +243,7 @@ function addFileExplorerEl<T extends HTMLElement>(id: string, iconName: string, 
 	if (id) outer.setAttribute('data-id', id);
 
 	const innerContainer = document.createElement('div');
-	innerContainer.classList.add('file-explorer-container');
+	innerContainer.classList.add('name-icon-container');
 	outer.appendChild(innerContainer);
 	if (isClickable) innerContainer.classList.add('file-explorer-clickable');
 

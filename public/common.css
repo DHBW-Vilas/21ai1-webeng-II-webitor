@@ -93,3 +93,24 @@ body.spooky {
 	color: inherit;
 	text-decoration: inherit;
 }
+
+.name-icon-container {
+	display: flex;
+	align-items: center;
+	height: 20px;
+	width: 100%;
+	margin: 4px;
+	position: relative;
+}
+
+.icon {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0px 2px;
+	height: 20px;
+	width: auto;
+}
+
+.clickable:hover {
+	cursor: pointer;
+}

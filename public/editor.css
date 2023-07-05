@@ -93,15 +93,6 @@ button {
 	margin-bottom: 1em;
 }
 
-.file-explorer-container {
-	display: flex;
-	align-items: center;
-	height: 20px;
-	width: 100%;
-	margin: 4px;
-	position: relative;
-}
-
 .file-explorer-inner-left {
 	position: absolute;
 	left: 0px;
@@ -141,18 +132,6 @@ button {
 
 .new-file-explorer-el-input {
 	width: 85%;
-}
-
-.icon {
-	display: inline-block;
-	vertical-align: middle;
-	margin: 0px 2px;
-	height: 20px;
-	width: auto;
-}
-
-.clickable:hover {
-	cursor: pointer;
 }
 
 /* Style the header and footer */

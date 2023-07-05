@@ -29,10 +29,33 @@ fetch('/workspaces')
 	.then((res) => {
 		if (res.success) {
 			(res.workspaces as Workspace[]).forEach((workspace) => {
-				const workspaceEl = document.createElement('div');
-				workspaceEl.innerText = workspace.name;
-				workspaceEl.addEventListener('click', (ev) => openWorkspace(workspace._id as string));
-				workspaceParentDiv.insertAdjacentElement('beforeend', workspaceEl);
+				const workspaceContainerEl = document.createElement('div');
+				workspaceContainerEl.classList.add('name-icon-container');
+
+				const workspaceNameEl = document.createElement('p');
+				workspaceNameEl.innerText = workspace.name;
+				workspaceNameEl.classList.add('workspace-name');
+				workspaceContainerEl.appendChild(workspaceNameEl);
+
+				const workspaceRmIcon = document.createElement('img');
+				workspaceRmIcon.src = '/public/icons/delete.png';
+				workspaceRmIcon.classList.add('icon', 'clickable');
+				workspaceRmIcon.addEventListener('click', (ev) => {
+					ev.stopPropagation();
+					fetch(`/workspace/${workspace._id}`, { method: 'DELETE' })
+						.then((res) => res.json() as Promise<Res>)
+						.then((res) => {
+							if (!res.success) {
+								// TODO: Error Handling
+							} else {
+								workspaceContainerEl.remove();
+							}
+						});
+				});
+				workspaceContainerEl.appendChild(workspaceRmIcon);
+
+				workspaceContainerEl.addEventListener('click', (ev) => openWorkspace(workspace._id as string));
+				workspaceParentDiv.insertAdjacentElement('beforeend', workspaceContainerEl);
 			});
 		}
 	});
@@ -94,46 +117,3 @@ function newWSResHandler(res: ResCreateWorkspace) {
 	localStorage.setItem('workspaceId', workspaceId);
 	window.location.href = '/editor';
 }
-
-// const dropArea = document.getElementById('drop-area');
-
-// ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
-// 	dropArea.addEventListener(eventName, preventDefaults, false);
-// });
-
-// function preventDefaults(e) {
-// 	e.preventDefault();
-// 	e.stopPropagation();
-// }
-
-// ['dragenter', 'dragover'].forEach((eventName) => {
-// 	dropArea.addEventListener(eventName, highlight, false);
-// });
-
-// ['dragleave', 'drop'].forEach((eventName) => {
-// 	dropArea.addEventListener(eventName, unhighlight, false);
-// });
-
-// function highlight(e) {
-// 	dropArea.classList.add('highlight');
-// }
-
-// function unhighlight(e) {
-// 	dropArea.classList.remove('highlight');
-// }
-
-// dropArea.addEventListener('drop', handleDrop, false);
-
-// function handleDrop(e) {
-// 	const dt = e.dataTransfer;
-// 	const files = dt.files;
-// 	console.log({ files });
-// 	document.getElementById('fileInput').files = files;
-// 	const formData = new FormData();
-// 	for (let i = 0; i < files.length; i++) {
-// 		formData.append('files[]', files[i]);
-// 	}
-// 	const xhr = new XMLHttpRequest();
-// 	xhr.open('POST', '/upload');
-// 	xhr.send(formData);
-// }
