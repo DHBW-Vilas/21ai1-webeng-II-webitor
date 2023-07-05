@@ -93,6 +93,15 @@ button {
 	margin-bottom: 1em;
 }
 
+#file-explorer-header {
+	width: 100%;
+}
+
+.file-explorer-header-input {
+	font-size: 1.1em;
+	font-weight: 600;
+}
+
 .file-explorer-inner-left {
 	position: absolute;
 	left: 0px;

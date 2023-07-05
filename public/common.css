@@ -79,6 +79,15 @@ body.spooky {
 	--box_shadow: #e96666;
 }
 
+.hidden {
+	display: none;
+}
+
+.workspace-name {
+	width: 80%;
+	color: var(--front_color);
+}
+
 .invisible-link {
 	color: inherit;
 	text-decoration: inherit;
@@ -112,5 +121,9 @@ body.spooky {
 }
 
 .clickable:hover {
+	cursor: pointer;
+}
+
+button:hover {
 	cursor: pointer;
 }

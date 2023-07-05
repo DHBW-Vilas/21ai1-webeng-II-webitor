@@ -336,7 +336,16 @@ app.get('/', (req, res) => {
 		await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspace._id } });
 		return res.json({ success: true, workspaceId: workspace._id });
 	})
-	.get('/download/:workspaceId', async (req, res) => {
+	.put('/rename/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
+		if (!(await checkAuth(req as unknown as Req, res))) return res.json({ success: false, err: 'Unauthenticated' });
+		if (!ws.isValidName(null, req.body.name)) return res.json({ success: false, err: 'Invalid Workspace name' });
+		const workspace = await Models.workspace.findById(req.params.workspaceId);
+		if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.json({ success: false, err: 'Unauthorized' });
+
+		await Models.workspace.findByIdAndUpdate(req.params.workspaceId, { name: req.body.name });
+		return res.json({ success: true });
+	})
+	.get('/download/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		if (!(await checkAuth(req as unknown as Req, res))) return res.status(401).end();
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
 		if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.status(401).end();

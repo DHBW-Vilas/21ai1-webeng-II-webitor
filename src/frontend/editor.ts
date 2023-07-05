@@ -18,8 +18,9 @@ import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } 
 import { lintKeymap } from '@codemirror/lint';
 import { getLangExtension } from './lang';
 import { WSDir, WSElement, WSFile, WSId, Workspace } from '../models';
-import { idxOfDir, isValidName } from '../util/workspace';
+import { isValidName } from '../util/workspace';
 import { Res, ResCreateDir, ResCreateFile } from '../util/endpoints';
+import { addRenamableWorkspaceEls, downloadWorkspace } from './common';
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const fileExplorerHeader = document.getElementById('file-explorer-header') as HTMLHeadingElement;
@@ -104,36 +105,6 @@ let root: DisplayedWorkspace | null = null;
 let openedFile: DisplayedWSFile | null = null;
 let workspaceId = localStorage.getItem('workspaceId');
 
-document.addEventListener('keydown', (e) => {
-	if (e.ctrlKey && e.key == 's') {
-		e.preventDefault();
-		saveFile();
-	}
-});
-
-openFile(null);
-
-function saveFile() {
-	if (!openedFile || !openedFile.modifiedContent) return;
-	fetch('/workspace/file/' + workspaceId + '/' + openedFile._id, {
-		method: 'PUT',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({ text: utf8_to_b64(openedFile.modifiedContent) }),
-	})
-		.then((res) => res.json())
-		.then((res) => {
-			console.log({ res });
-			if (res.success && openedFile) {
-				openedFile.content = openedFile.modifiedContent ?? '';
-				openedFile.modifiedContent = null;
-				openedFile.isSaved = true;
-				openedFile.el?.classList.remove('unsaved');
-			}
-		});
-}
-
 if (!workspaceId) {
 	fetch('/empty/workspace', { method: 'POST' })
 		.then((res) => res.json())
@@ -175,6 +146,16 @@ function getWorkspace() {
 			root.dirs = (res.root as WSDir).dirs.map((d, i) => addDirEl(root!, d, 0));
 			root.files = (res.root as WSDir).files.map((f, i) => addFileEl(root!, f, 0));
 			fileExplorerHeader.innerText = root.name;
+
+			addRenamableWorkspaceEls(
+				root.name,
+				root._id,
+				fileExplorerHeader,
+				document.getElementById('file-explorer-header-inner-left') as HTMLDivElement,
+				document.getElementById('file-explorer-header-inner-right') as HTMLDivElement,
+				'afterbegin',
+				'file-explorer-header-input'
+			);
 			newFileIcon.addEventListener('click', (ev) => newFile(root!));
 			newFolderIcon.addEventListener('click', (ev) => newFolder(root!));
 		})
@@ -183,15 +164,37 @@ function getWorkspace() {
 			console.log({ err });
 		});
 }
+openFile(null);
 
-downloadBtn.addEventListener('click', downloadWorkspace);
+downloadBtn.addEventListener('click', (ev) => {
+	if (workspaceId) downloadWorkspace(workspaceId);
+});
+document.addEventListener('keydown', (e) => {
+	if (e.ctrlKey && e.key == 's') {
+		e.preventDefault();
+		saveFile();
+	}
+});
 
-async function downloadWorkspace() {
-	const anchor = document.createElement('a');
-	anchor.href = '/download/' + workspaceId;
-	anchor.target = '_blank';
-	anchor.click();
-	anchor.remove();
+function saveFile() {
+	if (!openedFile || !openedFile.modifiedContent) return;
+	fetch('/workspace/file/' + workspaceId + '/' + openedFile._id, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ text: utf8_to_b64(openedFile.modifiedContent) }),
+	})
+		.then((res) => res.json())
+		.then((res) => {
+			console.log({ res });
+			if (res.success && openedFile) {
+				openedFile.content = openedFile.modifiedContent ?? '';
+				openedFile.modifiedContent = null;
+				openedFile.isSaved = true;
+				openedFile.el?.classList.remove('unsaved');
+			}
+		});
 }
 
 // See this post on why we need this function:

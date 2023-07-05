@@ -1,5 +1,6 @@
 import { Workspace } from '../models';
 import { Res, ResCreateWorkspace, ResGetWorkspaces } from '../util/endpoints';
+import { addRenamableWorkspaceEls, downloadWorkspace } from './common';
 import { langs } from './lang';
 
 const workspaceParentDiv = document.getElementById('workspaces') as HTMLDivElement;
@@ -32,18 +33,17 @@ fetch('/workspaces')
 				const workspaceContainerEl = document.createElement('div');
 				workspaceContainerEl.classList.add('name-icon-container');
 
-				const workspaceNameEl = document.createElement('p');
-				workspaceNameEl.innerText = workspace.name;
-				workspaceNameEl.classList.add('workspace-name');
-				workspaceContainerEl.appendChild(workspaceNameEl);
+				const nameEl = addRenamableWorkspaceEls(workspace.name, workspace._id, null, workspaceContainerEl, workspaceContainerEl, 'beforeend');
+				nameEl.classList.add('clickable');
 
-				const workspaceDownloadAnchor = document.createElement('a');
-				workspaceDownloadAnchor.href = `/download/${workspace._id}`;
-				workspaceContainerEl.appendChild(workspaceDownloadAnchor);
 				const workspaceDownloadIcon = document.createElement('img');
 				workspaceDownloadIcon.src = '/public/icons/download.png';
 				workspaceDownloadIcon.classList.add('icon', 'clickable');
-				workspaceDownloadAnchor.appendChild(workspaceDownloadIcon);
+				workspaceDownloadIcon.addEventListener('click', (ev) => {
+					ev.stopPropagation();
+					downloadWorkspace(String(workspace._id));
+				});
+				workspaceContainerEl.appendChild(workspaceDownloadIcon);
 
 				const workspaceRmIcon = document.createElement('img');
 				workspaceRmIcon.src = '/public/icons/delete.png';

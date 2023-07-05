@@ -128,12 +128,16 @@ export function addDir(parent: WSDir, dir: WSDir): number {
 	return parent.dirs.length - 1;
 }
 
-export function isValidName(dir: WSDir, name: string): boolean {
-	for (const f of dir.files) {
-		if (f.name == name) return false;
-	}
-	for (const d of dir.dirs) {
-		if (d.name == name) return false;
+export function isValidName(parent: WSDir | null, name: string): boolean {
+	if (!name) return false;
+	// TODO: What are some rules for invalid file/folder names
+	if (parent) {
+		for (const f of parent.files) {
+			if (f.name == name) return false;
+		}
+		for (const d of parent.dirs) {
+			if (d.name == name) return false;
+		}
 	}
 	return true;
 }

@@ -122,10 +122,6 @@
 	color: var(--front_body);
 }
 
-.workspace-name {
-	width: 80%;
-}
-
 .footer {
 	padding: 1em 0;
 }
