@@ -57,7 +57,7 @@ export function addRenamableWorkspaceEls(
 		ev.stopPropagation();
 	});
 	workspaceInputEl.addEventListener('focusout', (ev) => renameWorkspace());
-	document.addEventListener('keypress', (e) => {
+	workspaceInputEl.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape') renameWorkspace(true);
 		if (e.key === 'Enter') renameWorkspace();
 	});
