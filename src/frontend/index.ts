@@ -37,6 +37,14 @@ fetch('/workspaces')
 				workspaceNameEl.classList.add('workspace-name');
 				workspaceContainerEl.appendChild(workspaceNameEl);
 
+				const workspaceDownloadAnchor = document.createElement('a');
+				workspaceDownloadAnchor.href = `/download/${workspace._id}`;
+				workspaceContainerEl.appendChild(workspaceDownloadAnchor);
+				const workspaceDownloadIcon = document.createElement('img');
+				workspaceDownloadIcon.src = '/public/icons/download.png';
+				workspaceDownloadIcon.classList.add('icon', 'clickable');
+				workspaceDownloadAnchor.appendChild(workspaceDownloadIcon);
+
 				const workspaceRmIcon = document.createElement('img');
 				workspaceRmIcon.src = '/public/icons/delete.png';
 				workspaceRmIcon.classList.add('icon', 'clickable');
