@@ -147,6 +147,9 @@ button {
 	right: 0px;
 }
 
+.file-explorer-inner-children {
+}
+
 .file-explorer-inner {
 	display: flex;
 	align-items: center;
@@ -172,6 +175,10 @@ button {
 	padding: 0.2em;
 	margin: 0;
 	font-size: 1.1em;
+}
+
+.new-file-explorer-el-input {
+	width: 85%;
 }
 
 .icon {
