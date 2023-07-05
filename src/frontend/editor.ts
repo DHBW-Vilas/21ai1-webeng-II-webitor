@@ -156,8 +156,8 @@ function getWorkspace() {
 				'afterbegin',
 				'file-explorer-header-input'
 			);
-			newFileIcon.addEventListener('click', (ev) => newFile(root!, false));
-			newFolderIcon.addEventListener('click', (ev) => newFolder(root!, false));
+			newFileIcon.addEventListener('click', (ev) => newFile(root!));
+			newFolderIcon.addEventListener('click', (ev) => newFolder(root!));
 		})
 		.catch((err) => {
 			// TODO: Error Handling
@@ -293,6 +293,7 @@ function addClickableFilExplorerEl(id: WSId, iconName: string, depth: number, na
 		ev.stopPropagation();
 		if (onRmCallback) onRmCallback();
 		res.outer.remove();
+		ws.deleteById(root!, id);
 		fetch(`/workspace/${workspaceId}/${id}`, {
 			method: 'DELETE',
 		})
@@ -356,7 +357,7 @@ function addDirEl(parent: DisplayedWSDir, dir: WSDir, depth: number): DisplayedW
 		ev.stopPropagation();
 		console.log('Folder added');
 		if (!displayedFolder!.isOpen) toggleFolder(displayedFolder!);
-		newFolder(displayedFolder!, true);
+		newFolder(displayedFolder!);
 	});
 	innerRight.insertAdjacentElement('afterbegin', addFolderIcon);
 
@@ -367,7 +368,7 @@ function addDirEl(parent: DisplayedWSDir, dir: WSDir, depth: number): DisplayedW
 		ev.stopPropagation();
 		console.log('Folder removed');
 		if (!displayedFolder!.isOpen) toggleFolder(displayedFolder!);
-		newFile(displayedFolder!, true);
+		newFile(displayedFolder!);
 	});
 	innerRight.insertAdjacentElement('afterbegin', addFileIcon);
 
@@ -391,7 +392,6 @@ function showFolder(folder: DisplayedWSDir) {
 }
 
 function toggleFolder(folder: DisplayedWSDir) {
-	console.log(folder.isOpen);
 	if (folder.isOpen) {
 		console.log('is open');
 		folder.icon!.src = '/public/icons/closed-folder.png';
@@ -401,7 +401,6 @@ function toggleFolder(folder: DisplayedWSDir) {
 		folder.icon!.src = '/public/icons/open-folder.png';
 		showFolder(folder);
 	}
-	folder.isOpen = !folder.isOpen;
 	console.log(folder.isOpen);
 }
 
@@ -448,17 +447,17 @@ function addNew(parent: DisplayedWSDir, iconName: string, isFile: boolean, onCha
 	newElInput.addEventListener('change', changed);
 }
 
-function newFile(parent: DisplayedWSDir, addToParent: boolean) {
+function newFile(parent: DisplayedWSDir) {
 	addNew(parent, 'text-file.png', true, (el, file) => {
 		const displayedFile = addFileEl(parent, file as WSFile, parent.depth + 1);
-		if (addToParent) ws.addFile(parent, displayedFile);
+		ws.addFile(parent, displayedFile);
 	});
 }
 
-function newFolder(parent: DisplayedWSDir, addToParent: boolean) {
+function newFolder(parent: DisplayedWSDir) {
 	addNew(parent, 'open-folder.png', false, (el, folder) => {
 		const displayedDir = addDirEl(parent, folder as WSDir, parent.depth + 1);
-		if (addToParent) ws.addDir(parent, displayedDir);
+		ws.addDir(parent, displayedDir);
 	});
 }
 
