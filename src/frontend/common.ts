@@ -23,8 +23,6 @@ export function addRenamableWorkspaceEls(
 		nameEl = document.createElement('p');
 		nameContainer.appendChild(nameEl);
 	}
-	console.log({ nameEl });
-
 	nameEl!.innerText = workspaceName;
 	nameEl!.classList.add('workspace-name');
 
