@@ -380,12 +380,12 @@ app.get('/', (req, res) => {
 		// Delete file / dir with _id == fileOrDirId
 		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
 		try {
-			const workspace = await Models.workspace.findById(req.params.workspaceId);
-			const deleted = ws.deleteById(workspace as unknown as Workspace, req.params.fileOrDirId as WSId);
+			const workspace = (await Models.workspace.findById(req.params.workspaceId)) as unknown as Workspace;
+			const deleted = ws.deleteById(workspace, req.params.fileOrDirId as WSId);
 			if (!deleted) {
 				return res.json({ success: false, err: 'File or Directory with ID ' + req.params.fileOrDirId + " doesn't exist" });
 			}
-			await workspace?.save();
+			await Models.workspace.findByIdAndUpdate(req.params.workspaceId, { files: workspace.files, dirs: workspace.dirs });
 			res.json({ success: true });
 		} catch (e) {
 			console.error(e);
