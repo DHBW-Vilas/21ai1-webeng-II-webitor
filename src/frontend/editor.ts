@@ -247,6 +247,7 @@ const FILE_EXPLORER_DEPTH_PAD = 10;
 
 type FileExplorEl = {
 	outer: HTMLDivElement;
+	innerContainer: HTMLDivElement;
 	innerRight: HTMLDivElement;
 	innerChildren: HTMLDivElement;
 	icon: HTMLImageElement;
@@ -290,7 +291,7 @@ function addFileExplorerEl<T extends HTMLElement>(id: string, iconName: string, 
 	} else {
 		parent.dirs.at(-1)?.el?.insertAdjacentElement('beforebegin', outer);
 	}
-	return { outer, innerRight, innerChildren, icon: iconEl };
+	return { outer, innerContainer, innerRight, innerChildren, icon: iconEl };
 }
 
 function addClickableFilExplorerEl(id: WSId, iconName: string, depth: number, name: string, parent: DisplayedWSDir, isFile: boolean, onRmCallback: null | (() => void)): FileExplorEl {
@@ -342,7 +343,7 @@ function addFileEl(parent: DisplayedWSDir, file: WSFile, depth: number): Display
 
 function addDirEl(parent: DisplayedWSDir, dir: WSDir, depth: number): DisplayedWSDir {
 	let displayedFolder: undefined | DisplayedWSDir;
-	const { outer, innerRight, innerChildren, icon } = addClickableFilExplorerEl(dir._id, 'open-folder.png', depth, dir.name, parent, false, () => rmFolderElements(displayedFolder!));
+	const { outer, innerContainer, innerRight, innerChildren, icon } = addClickableFilExplorerEl(dir._id, 'open-folder.png', depth, dir.name, parent, false, () => rmFolderElements(displayedFolder!));
 
 	displayedFolder = {
 		_id: dir._id,
@@ -357,7 +358,7 @@ function addDirEl(parent: DisplayedWSDir, dir: WSDir, depth: number): DisplayedW
 	};
 	displayedFolder.dirs = dir.dirs.map((d) => addDirEl(displayedFolder!, d, depth + 1));
 	displayedFolder.files = dir.files.map((f) => addFileEl(displayedFolder!, f, depth + 1));
-	outer.addEventListener('click', (ev) => {
+	innerContainer.addEventListener('click', (ev) => {
 		ev.stopPropagation();
 		console.log(displayedFolder);
 		toggleFolder(displayedFolder as DisplayedWSDir);
@@ -414,6 +415,7 @@ function toggleFolder(folder: DisplayedWSDir) {
 		folder.icon!.src = '/public/icons/open-folder.png';
 		showFolder(folder);
 	}
+	folder.isOpen = !folder.isOpen;
 	console.log(folder.isOpen);
 }
 
