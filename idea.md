@@ -1,5 +1,0 @@
--   POST '/new/:workspaceName' für neuen Workspace
-    -   Response: WorkspaceId
-    -   Client speichert WorkspaceId im localStorage
--   GET '/editor' für HTML-Seite
--   GET '/workspace/:workspaceId' für Dateien vom Workspace
