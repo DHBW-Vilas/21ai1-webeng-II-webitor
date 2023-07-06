@@ -8,6 +8,8 @@ const passInput = document.getElementById('pass-input') as HTMLInputElement;
 const registerBtn = document.getElementById('register-btn') as HTMLButtonElement;
 const loginBtn = document.getElementById('login-btn') as HTMLButtonElement;
 
+nameInput.focus();
+
 registerBtn.addEventListener('click', () => authenticate(false));
 loginBtn.addEventListener('click', () => authenticate(true));
 
