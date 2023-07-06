@@ -28,6 +28,7 @@ insertStyleSelector('afterend', document.querySelector('#home-button') as HTMLEl
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const fileExplorerHeader = document.getElementById('file-explorer-header') as HTMLHeadingElement;
+const saveButton = document.getElementById('save-button') as HTMLButtonElement;
 const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
 const editorTextArea = document.getElementById('editor') as HTMLTextAreaElement;
 const editorHeader = document.getElementById('editor-header') as HTMLHeadingElement;
@@ -170,6 +171,7 @@ function getWorkspace() {
 }
 openFile(null);
 
+saveButton.addEventListener('click', (ev) => saveAll());
 downloadBtn.addEventListener('click', (ev) => {
 	if (workspaceId) downloadWorkspace(workspaceId);
 });
@@ -180,23 +182,28 @@ document.addEventListener('keydown', (e) => {
 	}
 });
 
-function saveFile() {
-	if (!openedFile || !openedFile.modifiedContent) return;
-	fetch('/workspace/file/' + workspaceId + '/' + openedFile._id, {
+async function saveAll(parent: DisplayedWSDir = root!) {
+	for await (const file of parent.files) await saveFile(file);
+	for await (const dir of parent.dirs) await saveAll(dir);
+}
+
+async function saveFile(file: DisplayedWSFile | null = openedFile) {
+	if (!file || !file.modifiedContent) return;
+	return fetch('/workspace/file/' + workspaceId + '/' + file._id, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ text: utf8_to_b64(openedFile.modifiedContent) }),
+		body: JSON.stringify({ text: utf8_to_b64(file.modifiedContent) }),
 	})
 		.then((res) => res.json())
 		.then((res) => {
 			console.log({ res });
-			if (res.success && openedFile) {
-				openedFile.content = openedFile.modifiedContent ?? '';
-				openedFile.modifiedContent = null;
-				openedFile.isSaved = true;
-				openedFile.el?.classList.remove('unsaved');
+			if (res.success && file) {
+				file.content = file.modifiedContent ?? '';
+				file.modifiedContent = null;
+				file.isSaved = true;
+				file.el?.classList.remove('unsaved');
 			}
 		});
 }
@@ -455,6 +462,7 @@ function newFile(parent: DisplayedWSDir) {
 	addNew(parent, 'text-file.png', true, (el, file) => {
 		const displayedFile = addFileEl(parent, file as WSFile, parent.depth + 1);
 		ws.addFile(parent, displayedFile);
+		openFile(displayedFile);
 	});
 }
 
