@@ -4,10 +4,10 @@ This website is an online code editor.
 
 ## Functions
 
--   [ ] Code Editor
+-   [x] Code Editor
 -   [x] Login
 -   [x] Anonymous Code Editing
--   [ ] Syntax Highlighting for supported languages
+-   [x] Syntax Highlighting for supported languages
 -   [x] Upload Files/Folders
 -   [x] Download edited Files/Folders
 -   [x] Open previously saved workspace
@@ -22,7 +22,7 @@ This website is an online code editor.
 
 ## Technologies
 
--   JavaScript (for Frontend)
+-   TypeScript (for Front- & Backend)
 -   Node.js
 -   MongoDB
 
