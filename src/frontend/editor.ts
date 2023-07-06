@@ -17,10 +17,14 @@ import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { lintKeymap } from '@codemirror/lint';
 import { getLangExtension } from './lang';
-import { WSDir, WSElement, WSFile, WSId, Workspace } from '../models';
+import { WSDir, WSFile, WSId, Workspace } from '../models';
 import ws from '../util/workspace';
 import { Res, ResCreateDir, ResCreateFile } from '../util/endpoints';
 import { addRenamableWorkspaceEls, downloadWorkspace } from './common';
+import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
+
+loadStyleFromCache();
+insertStyleSelector('afterend', document.querySelector('#home-button') as HTMLElement);
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const fileExplorerHeader = document.getElementById('file-explorer-header') as HTMLHeadingElement;

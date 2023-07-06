@@ -2,6 +2,10 @@ import { Workspace } from '../models';
 import { Res, ResCreateWorkspace, ResGetWorkspaces } from '../util/endpoints';
 import { addRenamableWorkspaceEls, downloadWorkspace } from './common';
 import { langs } from './lang';
+import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
+
+loadStyleFromCache();
+insertStyleSelector('beforebegin', document.querySelector('.post-description') as HTMLElement);
 
 const workspaceParentDiv = document.getElementById('workspaces') as HTMLDivElement;
 const fileInput = document.getElementById('fileInput') as HTMLInputElement;

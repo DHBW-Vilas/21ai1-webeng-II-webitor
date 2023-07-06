@@ -13,7 +13,7 @@ body {
 
 body.light {
 	--back_color: #fff;
-	--back_color2: whitesmoke;
+	--back_color2: #f1f1f1;
 	--back_sidebar: rgb(61, 79, 93);
 	--front_color: #111;
 	--front_sidebar: #8df2ff;

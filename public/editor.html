@@ -5,20 +5,13 @@
 		<title>Webitor</title>
 		<link rel="stylesheet" href="/public/common.css" />
 		<link id="style-link" rel="stylesheet" type="text/css" href="/public/editor.css" />
-		<script src="/public/switchStyle.js" defer></script>
 		<script src="/public/editor.js" defer></script>
 	</head>
 	<body class="light">
 		<div id="container">
 			<header id="editor-page-header">
 				<h1><a class="invisible-link" href="/">WEBITOR - EDITING PAGE</a></h1>
-				<button><a class="invisible-link" href="/">Home</a></button>
-				<select name="style-selector" id="style-selector">
-					<option value="light">Light Mode</option>
-					<option value="ddark">Dark Mode</option>
-					<option value="contrast">High Contrast Mode</option>
-					<option value="spooky">Spooky Mode</option>
-				</select>
+				<button id="home-button"><a class="invisible-link" href="/">Home</a></button>
 				<button onclick="switchStyle('pageLayoutContrast.css')">Save work</button>
 				<button id="download-btn">Download</button>
 				<button id="login-btn"><a class="invisible-link" href="/login">Sign Up/In</a></button>
