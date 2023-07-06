@@ -12,7 +12,7 @@ import {
 	highlightActiveLineGutter,
 } from '@codemirror/view';
 import { defaultHighlightStyle, syntaxHighlighting, indentOnInput, bracketMatching, foldGutter, foldKeymap } from '@codemirror/language';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { lintKeymap } from '@codemirror/lint';
@@ -90,7 +90,7 @@ const editorExtensions = [
 	highlightSelectionMatches(),
 	EditorView.lineWrapping,
 	fixedHeightEditor,
-	keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, ...foldKeymap, ...completionKeymap, ...lintKeymap]),
+	keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, ...foldKeymap, ...completionKeymap, ...lintKeymap, indentWithTab]),
 	EditorView.updateListener.of((update) => {
 		if (!update.docChanged || !openedFile) return;
 		openedFile.isSaved = false;
