@@ -283,10 +283,12 @@ function addFileExplorerEl<T extends HTMLElement>(id: string, iconName: string, 
 	innerLeft.style.position = 'absolute';
 	innerLeft.style.left = depth * FILE_EXPLORER_DEPTH_PAD + 'px';
 
-	if (isFile || !parent.files.length) {
+	if (isFile) {
 		parent.innerChildren.insertAdjacentElement('beforeend', outer);
+	} else if (!parent.dirs.length) {
+		parent.innerChildren.insertAdjacentElement('afterbegin', outer);
 	} else {
-		parent.files[0].el?.insertAdjacentElement('beforebegin', outer);
+		parent.dirs.at(-1)?.el?.insertAdjacentElement('beforebegin', outer);
 	}
 	return { outer, innerRight, innerChildren, icon: iconEl };
 }
