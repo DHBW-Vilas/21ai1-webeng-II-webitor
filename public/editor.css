@@ -2,24 +2,28 @@ body.light {
 	--editor_gutter_back: #eee;
 	--editor_gutter_color: #444;
 	--editor_active_back: #e2f2ff;
+	--editor_unsaved_color: #079cf3;
 }
 
 body.dark {
 	--editor_gutter_back: #333;
 	--editor_gutter_color: #aaa;
 	--editor_active_back: #777;
+	--editor_unsaved_color: #008fe1;
 }
 
 body.contrast {
 	--editor_gutter_back: #333;
 	--editor_gutter_color: #aaa;
 	--editor_active_back: #777;
+	--editor_unsaved_color: #008fe1;
 }
 
 body.spooky {
 	--editor_gutter_back: #333;
 	--editor_gutter_color: #aaa;
 	--editor_active_back: #777;
+	--editor_unsaved_color: #008fe1;
 }
 
 html,
@@ -45,8 +49,7 @@ body {
 
 .unsaved,
 .unsaved > p {
-	/* @Cleanup factor colors into a variable */
-	color: #08f;
+	color: var(--editor_unsaved_color);
 }
 
 .hidden {
@@ -97,8 +100,7 @@ body {
 }
 
 .file-explorer-clickable:hover {
-	/* @Cleanup factor colors into variable */
-	background-color: #5555;
+	background-color: var(--back_color2);
 	/* border: 1px solid rgba(9, 109, 240, 0.548); */
 }
 
