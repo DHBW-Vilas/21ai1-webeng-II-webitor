@@ -25,8 +25,6 @@ import lang, { HelloWorldFn, emptyHelloWorld } from './frontend/lang';
  */
 function archiveDir(Archiver: Archiver, dir: WSDir, path: string = '/') {
 	for (const file of dir.files) {
-		// @performance
-		// There must be a better way than to convert the binary blob into a string and then back into a binary buffer
 		Archiver.append(Buffer.from(file.content.toString(), 'utf-8'), { name: join(path, file.name) });
 	}
 	for (const d of dir.dirs) {
@@ -268,67 +266,69 @@ app.get('/', (req, res) => {
 		// The only other way would however be to use something like GridFS,
 		// which apparently allows streamed buffer-upload.
 		// Our files shouldn't be bigger than 16MB though, so using GridFS seems like overkill.
-		const workspaceName = req.params.workspaceName;
-		const form = formidable({
-			keepExtensions: true,
-			multiples: true,
-			filter: ({ name, originalFilename, mimetype }) => {
-				// TODO: Filter certain ignored files
-				// For example: filter all files in a .git folder
-				return true; // no filter yet
-			},
-			uploadDir: tmpDir,
-		});
-		form.parse(req, async (err, fields, files) => {
-			// TODO: Better error handling
-			if (err) throw err;
+		try {
+			const workspaceName = req.params.workspaceName;
+			const form = formidable({
+				keepExtensions: true,
+				multiples: true,
+				filter: ({ name, originalFilename, mimetype }) => {
+					return !originalFilename?.includes('.git/');
+				},
+				uploadDir: tmpDir,
+			});
+			form.parse(req, async (err, fields, files) => {
+				// TODO: Better error handling
+				if (err) throw err;
 
-			let idCounter = 0;
+				let idCounter = 0;
 
-			interface tmpWSDir {
-				_id: WSId | undefined;
-				name: string;
-				dirs: { [index: string]: tmpWSDir | undefined };
-				files: WSFile[];
-			}
-
-			const tmpRoot: tmpWSDir = { _id: undefined, name: workspaceName, files: [], dirs: {} };
-			if (!Array.isArray(files.file)) files.file = [files.file];
-			for await (const f of files.file) {
-				if (!f) continue;
-				const pathParts = (f.originalFilename ?? '').split('/');
-				const content = await fs.readFile(f.filepath);
-				const isTextfile = ws.checkIfTextFile(content);
-				const file: WSFile = { name: pathParts.pop() as string, content, isTextfile, _id: (idCounter++).toString() };
-				fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
-
-				let parentDir = tmpRoot;
-				for (const dname of pathParts) {
-					if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: (idCounter++).toString() };
-					parentDir = parentDir.dirs[dname] as tmpWSDir;
+				interface tmpWSDir {
+					_id: WSId | undefined;
+					name: string;
+					dirs: { [index: string]: tmpWSDir | undefined };
+					files: WSFile[];
 				}
-				parentDir.files.push(file);
-			}
 
-			const flattenDir = (dir: tmpWSDir): WSDir => {
-				let subdirs = Object.values(dir.dirs).map((d) => flattenDir(d as tmpWSDir));
-				return {
-					_id: dir._id as WSId,
-					name: dir.name,
-					dirs: subdirs,
-					files: dir.files,
+				const tmpRoot: tmpWSDir = { _id: undefined, name: workspaceName, files: [], dirs: {} };
+				if (!Array.isArray(files.file)) files.file = [files.file];
+				for await (const f of files.file) {
+					if (!f) continue;
+					const pathParts = (f.originalFilename ?? '').split('/');
+					const content = await fs.readFile(f.filepath);
+					const isTextfile = ws.checkIfTextFile(content);
+					const file: WSFile = { name: pathParts.pop() as string, content, isTextfile, _id: (idCounter++).toString() };
+					fs.rm(f.filepath); // Doesn't need to be awaited bc it doesn't matter when the deletion is done
+
+					let parentDir = tmpRoot;
+					for (const dname of pathParts) {
+						if (!parentDir.dirs[dname]) parentDir.dirs[dname] = { name: dname, files: [], dirs: {}, _id: (idCounter++).toString() };
+						parentDir = parentDir.dirs[dname] as tmpWSDir;
+					}
+					parentDir.files.push(file);
+				}
+
+				const flattenDir = (dir: tmpWSDir): WSDir => {
+					let subdirs = Object.values(dir.dirs).map((d) => flattenDir(d as tmpWSDir));
+					return {
+						_id: dir._id as WSId,
+						name: dir.name,
+						dirs: subdirs,
+						files: dir.files,
+					};
 				};
-			};
-			const root: WSDir = ws.sortWS(flattenDir(tmpRoot));
+				const root: WSDir = ws.sortWS(flattenDir(tmpRoot));
 
-			if (!root.files.length && !root.dirs.length) {
-				return res.json({ success: false, id: null });
-			}
+				if (!root.files.length && !root.dirs.length) {
+					return res.json({ success: false, id: null });
+				}
 
-			const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [(req as unknown as Req).userId], idCounter });
-			await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspaceDoc._id } });
-			res.json({ success: true, id: workspaceDoc._id });
-		});
+				const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [(req as unknown as Req).userId], idCounter });
+				await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspaceDoc._id } });
+				res.json({ success: true, workspaceId: workspaceDoc._id });
+			});
+		} catch (e) {
+			console.log('Error');
+		}
 	})
 	.post('/empty/workspace', async (req, res) => {
 		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: 'Unauthenticated' });
@@ -367,7 +367,9 @@ app.get('/', (req, res) => {
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
 		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false });
+		console.log(req.params.workspaceId);
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
+		console.log(workspace);
 		res.json({ success: true, root: workspace });
 	})
 	.put('/workspace/file/:workspaceId/:fileId', async (req, res) => {
