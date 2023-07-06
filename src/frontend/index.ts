@@ -8,7 +8,7 @@ loadStyleFromCache();
 insertStyleSelector('beforebegin', document.querySelector('.post-description') as HTMLElement);
 
 const workspaceParentDiv = document.getElementById('workspaces') as HTMLDivElement;
-const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+const fileInput = document.getElementById('file-input') as HTMLInputElement;
 const createWSName = document.getElementById('newWSName') as HTMLInputElement;
 const createWSBtn = document.getElementById('newWSBtn') as HTMLButtonElement;
 const uploadWSName = document.getElementById('uploadWSName') as HTMLInputElement;
