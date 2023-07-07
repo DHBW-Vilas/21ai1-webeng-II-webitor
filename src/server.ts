@@ -290,10 +290,12 @@ app.get('/', (req, res) => {
 						files: dir.files,
 					};
 				};
-				const root: WSDir = ws.sortWS(flattenDir(tmpRoot));
+				let root: WSDir = ws.sortWS(flattenDir(tmpRoot));
 
-				if (!root.files.length && !root.dirs.length) {
-					return res.json({ success: false, id: null });
+				if (root.dirs.length == 1 && root.files.length == 0) {
+					// This is always the case when the browser prefixes each path with the root directory's name (which happens on all tested browsers)
+					// Since we don't want to have the root directory as a subdirectory of the workspace, we have to do the following:
+					root = root.dirs[0];
 				}
 
 				const workspaceDoc = await Models.workspace.create({ name: workspaceName, dirs: root.dirs, files: root.files, editors: [(req as unknown as Req).userId], idCounter });
