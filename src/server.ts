@@ -13,7 +13,7 @@ import formidable from 'formidable'; // for uploading files
 import Models, { WSDir, WSFile, WSId, Workspace, ObjectId } from './models'; // Models for MongoDB
 import ws from './util/workspace'; // Utility methods for working with the workspace-directory-tree
 import archiver from 'archiver'; // For archiving workspace in a single zip-file
-import { RequestHandler } from 'express-serve-static-core';
+import { CookieOptions, RequestHandler } from 'express-serve-static-core'; // For type definitions
 
 import { join } from 'path';
 import { Archiver } from 'archiver';
@@ -51,7 +51,6 @@ if (!existsSync(tmpDir)) fs.mkdir(tmpDir);
 // Global Read-Only Variables
 const SALT_ROUNDS = 10;
 const MAX_AUTH_TIME = 1000 * 60 * 60 * 12 * 5; // 5 days (in ms)
-const MAX_URL_COOKIE_TIME = 1000 * 60 * 60 * 12 * 2; // 2 days (in ms)
 const UNAUTHORIZED_MSG = 'Not authorized to change this workspace';
 const UNAUTHENTICATED_MSG = 'Not authenticated - Please login first';
 
@@ -75,24 +74,6 @@ app.use('/public', express.static(publicPath));
 app.use(express.json());
 app.use(cookieParser(ENV.SECRET));
 
-/**
- *
- * @param {String} fileOnAuth The File to respond with if the user is authenticated
- * @param {String} fileOnErr The File to respond with if the user isn't authenticated
- * @param {Boolean} inPublicDir Whether the files are assumed to be in the public directory.
- * @returns
- */
-function simpleAuthCheck(fileOnAuth: string, fileOnErr: string, inPublicDir: boolean = true) {
-	if (inPublicDir) {
-		fileOnAuth = path.join(publicPath, fileOnAuth);
-		fileOnErr = path.join(publicPath, fileOnErr);
-	}
-	return async (req: Req, res: Response) => {
-		if (await checkAuth(req, res)) res.sendFile(fileOnAuth);
-		else res.sendFile(fileOnErr);
-	};
-}
-
 async function checkAuth(req: Req, res: Response, authAsAnon = true) {
 	let authTok = req.signedCookies['auth'];
 	req.userId = AUTH_TOKS[authTok];
@@ -102,7 +83,6 @@ async function checkAuth(req: Req, res: Response, authAsAnon = true) {
 		setAuthCookie(res, authTok, true);
 	}
 	req.userId = AUTH_TOKS[authTok];
-	res.cookie('redirectUrl', '');
 	return true;
 }
 
@@ -123,14 +103,6 @@ async function rmAnonUsers(before = Date.now() - ANON_USER_LIFETIME) {
 async function forceAuth(req: Req, res: Response, next: NextFunction) {
 	if (await checkAuth(req, res, false)) next();
 	else next(new Error(UNAUTHENTICATED_MSG));
-}
-
-function authErrRedirect(err: ErrorRequestHandler, req: Req, res: Response, next: NextFunction) {
-	if (req.userId === null) {
-		res.cookie('redirectUrl', req.originalUrl, { maxAge: MAX_URL_COOKIE_TIME }).redirect('/login');
-	} else {
-		next(err);
-	}
 }
 
 function authErrJSON(obj = {}) {
@@ -176,13 +148,13 @@ async function transferAnonWorkspaces(req: Req, newAuthTok: string) {
 
 // Set up Routing
 app.get('/', (req, res) => {
-	res.sendFile(path.join(publicPath, 'index.html'));
+	res.cookie('redirectUrl', '/').sendFile(path.join(publicPath, 'index.html'));
 })
 	.get('/favicon.ico', (req, res) => {
 		res.sendFile(path.join(publicPath, 'logo3.ico'));
 	})
 	.get('/editor', (req, res) => {
-		res.sendFile(path.join(publicPath, 'editor.html'));
+		res.cookie('redirectUrl', '/editor').sendFile(path.join(publicPath, 'editor.html'));
 	})
 	.get('/login', (req, res) => {
 		res.sendFile(path.join(publicPath, 'login.html'));
