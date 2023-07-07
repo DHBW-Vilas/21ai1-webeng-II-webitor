@@ -153,6 +153,9 @@ app.get('/', (req, res) => {
 	.get('/favicon.ico', (req, res) => {
 		res.sendFile(path.join(publicPath, 'logo3.ico'));
 	})
+	.get('/attributions', (req, res) => {
+		res.sendFile(path.join(publicPath, 'attributions.html'));
+	})
 	.get('/editor', (req, res) => {
 		res.cookie('redirectUrl', '/editor').sendFile(path.join(publicPath, 'editor.html'));
 	})
