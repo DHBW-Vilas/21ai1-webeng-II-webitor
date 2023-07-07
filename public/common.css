@@ -224,7 +224,6 @@ input[type='password'] {
 }
 
 select:hover,
-input:hover,
 button:hover {
 	border-color: var(--border_dropdown_color);
 	cursor: pointer;
