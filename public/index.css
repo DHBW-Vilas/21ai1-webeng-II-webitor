@@ -3,12 +3,11 @@
 	grid-gap: 10px;
 	grid-template-columns: 1fr 1fr 1fr;
 	padding: 20px;
-	height: 50vh;
+	height: 100%;
 }
 
-/* Style the header and footer */
-
 .box {
+	height: 100%;
 	position: relative;
 	color: var(--front_box);
 	background-color: var(--back_color);
@@ -75,16 +74,6 @@
 	text-decoration: none;
 }
 
-.content-subhead {
-	text-transform: uppercase;
-	color: var(--front_body);
-	border-bottom: 1px solid var(--borders);
-	padding: 0.4em 0;
-	font-size: 80%;
-	font-weight: 500;
-	letter-spacing: 0.1em;
-}
-
 .content {
 	padding: 2em 1em 0;
 }
@@ -100,11 +89,6 @@
 	font-family: Georgia, 'Cambria', serif;
 	color: var(--front_body);
 	line-height: 1.8em;
-}
-.post-meta {
-	color: var(--front_body);
-	font-size: 90%;
-	margin: 0;
 }
 
 .post-category {
