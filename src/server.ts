@@ -327,7 +327,7 @@ app.get('/', (req, res) => {
 				res.json({ success: true, workspaceId: workspaceDoc._id });
 			});
 		} catch (e) {
-			console.log('Error');
+			// TODO: Error Handling
 		}
 	})
 	.post('/empty/workspace', async (req, res) => {
