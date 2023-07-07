@@ -3,7 +3,7 @@ const webpackNodeExternals = require('webpack-node-externals');
 
 // Common configurations
 const config = {
-	mode: 'development',
+	mode: 'production',
 	module: {
 		rules: [
 			{
