@@ -90,13 +90,10 @@ export function errorPopUp(msgs: string | string[], parentEl: HTMLElement = docu
 	closeIcon.addEventListener('click', (ev) => popUp.remove());
 
 	window.addEventListener('keypress', (ev) => {
-		console.log(ev.key);
-
 		if (ev.key == 'Escape') popUp.remove();
 	});
 	popUp.appendChild(msgContainer);
 	popUp.appendChild(closeIcon);
-	console.log(parentEl);
 
 	parentEl.appendChild(popUp);
 }

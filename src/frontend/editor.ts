@@ -197,12 +197,13 @@ async function saveFile(file: DisplayedWSFile | null = openedFile) {
 	})
 		.then((res) => res.json())
 		.then((res) => {
-			console.log({ res });
 			if (res.success && file) {
 				file.content = file.modifiedContent ?? '';
 				file.modifiedContent = null;
 				file.isSaved = true;
 				file.el?.classList.remove('unsaved');
+			} else {
+				errorPopUp(res.err!);
 			}
 		});
 }
@@ -356,7 +357,6 @@ function addDirEl(parent: DisplayedWSDir, dir: WSDir, depth: number): DisplayedW
 	displayedFolder.files = dir.files.map((f) => addFileEl(displayedFolder!, f, depth + 1));
 	innerContainer.addEventListener('click', (ev) => {
 		ev.stopPropagation();
-		console.log(displayedFolder);
 		toggleFolder(displayedFolder as DisplayedWSDir);
 	});
 
@@ -365,7 +365,6 @@ function addDirEl(parent: DisplayedWSDir, dir: WSDir, depth: number): DisplayedW
 	addFolderIcon.classList.add('icon', 'clickable');
 	addFolderIcon.addEventListener('click', (ev) => {
 		ev.stopPropagation();
-		console.log('Folder added');
 		if (!displayedFolder!.isOpen) toggleFolder(displayedFolder!);
 		newFolder(displayedFolder!);
 	});
@@ -376,7 +375,6 @@ function addDirEl(parent: DisplayedWSDir, dir: WSDir, depth: number): DisplayedW
 	addFileIcon.classList.add('icon', 'clickable');
 	addFileIcon.addEventListener('click', (ev) => {
 		ev.stopPropagation();
-		console.log('Folder removed');
 		if (!displayedFolder!.isOpen) toggleFolder(displayedFolder!);
 		newFile(displayedFolder!);
 	});
@@ -403,16 +401,13 @@ function showFolder(folder: DisplayedWSDir) {
 
 function toggleFolder(folder: DisplayedWSDir) {
 	if (folder.isOpen) {
-		console.log('is open');
 		folder.icon!.src = '/public/icons/closed-folder.png';
 		hideFolder(folder);
 	} else {
-		console.log('is closed');
 		folder.icon!.src = '/public/icons/open-folder.png';
 		showFolder(folder);
 	}
 	folder.isOpen = !folder.isOpen;
-	console.log(folder.isOpen);
 }
 
 function addNew(parent: DisplayedWSDir, iconName: string, isFile: boolean, onChange: (el: HTMLInputElement, wsEl: WSDir | WSFile) => void) {

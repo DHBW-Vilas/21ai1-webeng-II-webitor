@@ -123,7 +123,6 @@ function createWS() {
 function newWSResHandler(res: ResCreateWorkspace, parentEl: HTMLDivElement) {
 	pendingReq = false;
 	if (!res.success) {
-		console.log(parentEl);
 		errorPopUp([res.err!, 'Reload the page and try again'], parentEl);
 	} else {
 		const workspaceId = res.workspaceId;

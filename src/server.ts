@@ -241,9 +241,6 @@ app.get('/', (req, res) => {
 		// @performance
 		// seems kinda dumb that we need to first store the files locally
 		// before reading them into memory (again) and sending them to mongodb.
-		// The only other way would however be to use something like GridFS,
-		// which apparently allows streamed buffer-upload.
-		// Our files shouldn't be bigger than 16MB though, so using GridFS seems like overkill.
 		try {
 			const workspaceName = req.params.workspaceName;
 			const form = formidable({
@@ -338,8 +335,8 @@ app.get('/', (req, res) => {
 			res.on('finish', () => {
 				res.end();
 			});
-			Zipper.on('warning', (w) => console.log({ warning: w }));
-			Zipper.on('error', (e) => console.log({ error: e }));
+			Zipper.on('warning', (w) => console.error({ warning: w }));
+			Zipper.on('error', (e) => console.error({ error: e }));
 			Zipper.pipe(res);
 			archiveDir(Zipper, workspace as unknown as Workspace);
 			Zipper.finalize();
@@ -349,9 +346,7 @@ app.get('/', (req, res) => {
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
 		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false });
-		console.log(req.params.workspaceId);
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
-		console.log(workspace);
 		res.json({ success: true, root: workspace });
 	})
 	.put('/workspace/file/:workspaceId/:fileId', async (req, res) => {
