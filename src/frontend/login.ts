@@ -1,5 +1,4 @@
-import { errorPopUp } from './common';
-import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
+import { insertStyleSelector, loadStyleFromCache, errorPopUp } from './common';
 
 loadStyleFromCache();
 insertStyleSelector('beforeend', document.querySelector('header') as HTMLElement);

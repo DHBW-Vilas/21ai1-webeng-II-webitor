@@ -1,6 +1,75 @@
 import { WSId } from '../models';
 import { Res } from '../util/endpoints';
 
+const styles: {
+	[index: string]: string;
+} = {
+	light: 'Light Mode',
+	dark: 'Dark Mode',
+	contrast: 'High Contrast Mode',
+	spooky: 'Spooky Mode',
+};
+
+// Check whether the user is logged in
+export function isLoggedIn(): boolean {
+	return document.cookie.split(';').some((cookie) => cookie.includes('anon=false'));
+}
+
+// Inserts a button, that either lets the user login or logout,
+// depending on whether they already are logged in.
+// The button will be inserted relative to `el`
+export function insertLoginBtn(pos: InsertPosition, el: HTMLElement): HTMLButtonElement {
+	const btn = document.createElement('button');
+	if (isLoggedIn()) {
+		btn.innerText = 'Sign out';
+		btn.addEventListener('click', () => {
+			document.cookie = 'auth=;expires=Thu, 01 Jan 1970 00:00:01 GMT'; // Clear auth cookie
+		});
+	} else {
+		btn.innerText = 'Sign Up/In';
+	}
+	btn.addEventListener('click', () => (window.location.href = '/login'));
+
+	el.insertAdjacentElement(pos, btn);
+	return btn;
+}
+
+// Load cached style preference
+export function loadStyleFromCache() {
+	let styleMode = localStorage.getItem('style');
+	if (styleMode) switchStyle(styleMode);
+}
+
+// Insert the drop-down-menu for selecting the style (light/dark/etc)
+// The select-element will be inserted relative to `el`.
+export function insertStyleSelector(pos: InsertPosition, el: HTMLElement): HTMLSelectElement {
+	const styleSelector = document.createElement('select');
+	styleSelector.addEventListener('change', (ev) => {
+		switchStyle(styleSelector.value);
+	});
+
+	for (const key in styles) {
+		const opt = document.createElement('option');
+		opt.value = key;
+		opt.innerText = styles[key];
+		styleSelector.appendChild(opt);
+	}
+
+	const selected = localStorage.getItem('style');
+	if (selected) styleSelector.value = selected;
+
+	el.insertAdjacentElement(pos, styleSelector);
+	return styleSelector;
+}
+
+// Switch style (e.g. to dark-mode)
+export function switchStyle(mode: string) {
+	document.body.classList.remove('light', 'dark', 'contrast', 'spooky');
+	document.body.classList.add(mode);
+	localStorage.setItem('style', mode); // Store style preference in cache
+}
+
+// Show the Error Message to the user via a popup
 export function errorPopUp(msgs: string | string[], parentEl: HTMLElement = document.body) {
 	const popUp = document.createElement('div');
 	popUp.classList.add('error-popup', 'centered');
@@ -32,6 +101,7 @@ export function errorPopUp(msgs: string | string[], parentEl: HTMLElement = docu
 	parentEl.appendChild(popUp);
 }
 
+// Download the workspace
 export async function downloadWorkspace(workspaceId: string) {
 	const anchor = document.createElement('a');
 	anchor.href = '/download/' + workspaceId;
@@ -40,7 +110,8 @@ export async function downloadWorkspace(workspaceId: string) {
 	anchor.remove();
 }
 
-// Returns the nameEl
+// Add the elements for making the workspace name-element renamable
+// Returns the name-element
 export function addRenamableWorkspaceEls(
 	workspaceName: string,
 	workspaceId: WSId,
@@ -109,6 +180,11 @@ export function addRenamableWorkspaceEls(
 }
 
 export default {
+	isLoggedIn,
+	insertLoginBtn,
+	loadStyleFromCache,
+	insertStyleSelector,
+	switchStyle,
 	addRenamableWorkspaceEls,
 	downloadWorkspace,
 	errorPopUp,

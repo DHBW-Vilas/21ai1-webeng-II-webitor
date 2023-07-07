@@ -1,11 +1,11 @@
 import { Workspace } from '../models';
 import { Res, ResCreateWorkspace, ResGetWorkspaces } from '../util/endpoints';
-import { addRenamableWorkspaceEls, downloadWorkspace, errorPopUp } from './common';
+import { insertStyleSelector, loadStyleFromCache, addRenamableWorkspaceEls, downloadWorkspace, errorPopUp, insertLoginBtn } from './common';
 import { langs } from './lang';
-import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
 
 loadStyleFromCache();
 insertStyleSelector('beforebegin', document.querySelector('.post-description') as HTMLElement).classList.add('centered-horizontal');
+insertLoginBtn('afterend', document.querySelector('#playground-title') as HTMLElement).classList.add('centered-horizontal');
 
 const workspaceParentDiv = document.getElementById('workspaces') as HTMLDivElement;
 const fileInput = document.getElementById('file-input') as HTMLInputElement;

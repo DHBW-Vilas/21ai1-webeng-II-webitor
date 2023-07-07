@@ -99,7 +99,7 @@ async function checkAuth(req: Req, res: Response, authAsAnon = true) {
 	if (!AUTH_TOKS[authTok]) {
 		if (!authAsAnon) return false;
 		authTok = await createUser();
-		setAuthCookie(res, authTok);
+		setAuthCookie(res, authTok, true);
 	}
 	req.userId = AUTH_TOKS[authTok];
 	res.cookie('redirectUrl', '');
@@ -154,8 +154,9 @@ async function createUser(name: string | null = null, pass: string | null = null
 	return authTok;
 }
 
-function setAuthCookie(res: Response, authTok: string) {
-	return res.cookie('auth', authTok, { signed: true, maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: true });
+function setAuthCookie(res: Response, authTok: string, isAnon: boolean) {
+	const cookieOpts: CookieOptions = { maxAge: MAX_AUTH_TIME, sameSite: 'strict', httpOnly: false };
+	return res.cookie('anon', isAnon, cookieOpts).cookie('auth', authTok, { signed: true, ...cookieOpts });
 }
 
 async function transferAnonWorkspaces(req: Req, newAuthTok: string) {
@@ -205,7 +206,7 @@ app.get('/', (req, res) => {
 
 		const authTok = await createUser(name, pass, false);
 		transferAnonWorkspaces(req as Req, authTok);
-		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
+		return setAuthCookie(res, authTok, false).status(200).json({ success: true, url: newURL });
 	})
 	.post('/login', async (req, res) => {
 		let name = req.body.name || null;
@@ -233,7 +234,7 @@ app.get('/', (req, res) => {
 		const authTok = genRandStr(32, 'hex');
 		AUTH_TOKS[authTok] = user._id;
 		transferAnonWorkspaces(req as Req, authTok);
-		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
+		return setAuthCookie(res, authTok, false).status(200).json({ success: true, url: newURL });
 	})
 	.get('/workspaces', async (req, res) => {
 		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });

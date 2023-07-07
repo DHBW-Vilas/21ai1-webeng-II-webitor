@@ -20,11 +20,7 @@ import { getLangExtension } from './lang';
 import { WSDir, WSFile, WSId, Workspace } from '../models';
 import ws from '../util/workspace';
 import { Res, ResCreateDir, ResCreateFile } from '../util/endpoints';
-import { addRenamableWorkspaceEls, downloadWorkspace, errorPopUp } from './common';
-import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
-
-loadStyleFromCache();
-insertStyleSelector('afterend', document.querySelector('.home-link-header') as HTMLElement);
+import { insertStyleSelector, loadStyleFromCache, addRenamableWorkspaceEls, downloadWorkspace, errorPopUp, insertLoginBtn } from './common';
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const fileExplorerHeader = document.getElementById('file-explorer-header') as HTMLHeadingElement;
@@ -34,6 +30,10 @@ const editorTextArea = document.getElementById('editor') as HTMLTextAreaElement;
 const editorHeader = document.getElementById('editor-header') as HTMLHeadingElement;
 const newFileIcon = document.getElementById('new-file-icon') as HTMLImageElement;
 const newFolderIcon = document.getElementById('new-folder-icon') as HTMLImageElement;
+
+loadStyleFromCache();
+insertStyleSelector('afterend', document.querySelector('.home-link-header') as HTMLElement);
+insertLoginBtn('afterend', downloadBtn);
 
 function updateBoxHeights() {
 	const container = document.getElementById('container') as HTMLDivElement;
