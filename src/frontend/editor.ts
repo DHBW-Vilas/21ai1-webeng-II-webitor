@@ -220,7 +220,6 @@ function b64_to_utf8(str: string): string {
 function openFile(file: DisplayedWSFile | null) {
 	openedFile = file;
 	if (file === null) {
-		// TODO: Maybe hide editor?
 		editorView.setState(EditorState.create({ doc: '' }));
 		editorHeader.innerText = 'No File opened';
 	} else if (!file.isTextfile) {

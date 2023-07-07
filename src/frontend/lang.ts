@@ -8,7 +8,6 @@ import { cpp } from '@codemirror/lang-cpp';
 import { php } from '@codemirror/lang-php';
 import { css } from '@codemirror/lang-css';
 import { sql } from '@codemirror/lang-sql';
-import { rust } from '@codemirror/lang-rust';
 import { xml } from '@codemirror/lang-xml';
 import { html } from '@codemirror/lang-html';
 import { wast } from '@codemirror/lang-wast';
@@ -172,31 +171,6 @@ int main()
 		fileExtensions: ['sql'],
 		cmExtension: () => sql(),
 		helloWorld: null,
-	},
-	{
-		name: 'Rust',
-		fileExtensions: ['rs'],
-		cmExtension: () => rust(),
-		helloWorld: (name: string, editors: ObjectId[], conv: StringConverter) => {
-			// TODO
-			let dirs: WSDir[] = [];
-			let files: WSFile[] = [
-				{
-					_id: '0' as WSId,
-					name: 'index.',
-					isTextfile: true,
-					content: conv(`console.log("Hello World");`),
-				},
-			];
-			return {
-				_id: undefined,
-				name,
-				editors,
-				idCounter: 1,
-				dirs,
-				files,
-			};
-		},
 	},
 	{
 		name: 'XML',

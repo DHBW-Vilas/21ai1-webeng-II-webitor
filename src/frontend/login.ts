@@ -19,8 +19,6 @@ function authenticate(isLogin: boolean) {
 	let pass = passInput.value;
 
 	let path = isLogin ? '/login' : '/register';
-	// TODO: Check that password is good enough
-	// TODO: Check that password is at most 72 bytes long (bc of hashing algorithm used)
 
 	if (name && pass) {
 		fetch(path, {

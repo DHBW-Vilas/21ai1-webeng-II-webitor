@@ -173,7 +173,7 @@ app.get('/', (req, res) => {
 			return res.status(418).json({ success: false, err: 'Invalid Username or Password.' });
 		}
 		if (Buffer.from(pass, 'utf-8').byteLength > 72) {
-			return res.status(418).json({ success: false, err: 'Password is not allowed to be more than 72 bytes long (Note: some characters take more than 1 byte).' });
+			return res.status(418).json({ success: false, err: 'Password is not allowed to be more than 72 bytes long (Note: some characters might take more than 1 byte).' });
 		}
 		if ((await Models.user.exists({ name })) != null) {
 			return res.status(418).json({ success: false, err: 'Username is already taken' });
