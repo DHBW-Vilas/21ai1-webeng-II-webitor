@@ -151,7 +151,7 @@ app.get('/', (req, res) => {
 	res.cookie('redirectUrl', '/').sendFile(path.join(publicPath, 'index.html'));
 })
 	.get('/favicon.ico', (req, res) => {
-		res.sendFile(path.join(publicPath, 'logo3.ico'));
+		res.sendFile(path.join(publicPath, 'logo.ico'));
 	})
 	.get('/attributions', (req, res) => {
 		res.sendFile(path.join(publicPath, 'attributions.html'));
