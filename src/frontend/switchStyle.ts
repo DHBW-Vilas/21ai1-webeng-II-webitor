@@ -13,7 +13,7 @@ export function loadStyleFromCache() {
 	if (styleMode) switchStyle(styleMode);
 }
 
-export function insertStyleSelector(pos: InsertPosition, el: HTMLElement) {
+export function insertStyleSelector(pos: InsertPosition, el: HTMLElement): HTMLElement {
 	const styleSelector = document.createElement('select');
 	styleSelector.addEventListener('change', (ev) => {
 		switchStyle(styleSelector.value);
@@ -30,6 +30,7 @@ export function insertStyleSelector(pos: InsertPosition, el: HTMLElement) {
 	if (selected) styleSelector.value = selected;
 
 	el.insertAdjacentElement(pos, styleSelector);
+	return styleSelector;
 }
 
 export function switchStyle(mode: string) {

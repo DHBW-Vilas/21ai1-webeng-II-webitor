@@ -1,11 +1,11 @@
 import { Workspace } from '../models';
 import { Res, ResCreateWorkspace, ResGetWorkspaces } from '../util/endpoints';
-import { addRenamableWorkspaceEls, downloadWorkspace } from './common';
+import { addRenamableWorkspaceEls, downloadWorkspace, errorPopUp } from './common';
 import { langs } from './lang';
 import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
 
 loadStyleFromCache();
-insertStyleSelector('beforebegin', document.querySelector('.post-description') as HTMLElement);
+insertStyleSelector('beforebegin', document.querySelector('.post-description') as HTMLElement).classList.add('centered-horizontal');
 
 const workspaceParentDiv = document.getElementById('workspaces') as HTMLDivElement;
 const fileInput = document.getElementById('file-input') as HTMLInputElement;
@@ -13,6 +13,10 @@ const createWSName = document.getElementById('newWSName') as HTMLInputElement;
 const createWSBtn = document.getElementById('newWSBtn') as HTMLButtonElement;
 const uploadWSName = document.getElementById('uploadWSName') as HTMLInputElement;
 const uploadWSBtn = document.getElementById('uploadWSBtn') as HTMLButtonElement;
+const createWSBox = document.getElementById('ws-create-box') as HTMLDivElement;
+const uploadWSBox = document.getElementById('ws-upload-box') as HTMLDivElement;
+
+// Set up language drop-down menu
 const langSelect = document.getElementById('langMenu') as HTMLSelectElement;
 {
 	const noneOpt = document.createElement('option');
@@ -58,7 +62,7 @@ fetch('/workspaces')
 						.then((res) => res.json() as Promise<Res>)
 						.then((res) => {
 							if (!res.success) {
-								// TODO: Error Handling
+								errorPopUp(res.err!);
 							} else {
 								workspaceContainerEl.remove();
 							}
@@ -85,47 +89,45 @@ createWSBtn.addEventListener('click', createWS);
 function uploadWS() {
 	const name = uploadWSName.value;
 	const files = Array.from(fileInput.files ?? []);
-	if (!name || !files) {
-		// TODO: Show Error to the user
-		console.log('ERROR');
-		return;
+	if (!name) {
+		errorPopUp("You need to provide a name for the workspace you're uploading.", uploadWSBox);
+	} else if (!files) {
+		errorPopUp('You need to select a folder from your local machine to upload the workspace.', uploadWSBox);
+	} else {
+		const fd = new FormData();
+		files.forEach((file) => fd.append('file', file, file.webkitRelativePath));
+		pendingReq = true;
+		fetch('/upload/' + name, {
+			method: 'POST',
+			body: fd,
+		})
+			.then((res) => res.json())
+			.then((res) => newWSResHandler(res, uploadWSBox));
 	}
-
-	const fd = new FormData();
-	files.forEach((file) => fd.append('file', file, file.webkitRelativePath));
-	pendingReq = true;
-	fetch('/upload/' + name, {
-		method: 'POST',
-		body: fd,
-	})
-		.then((res) => res.json())
-		.then(newWSResHandler);
 }
 
 function createWS() {
 	const name = createWSName.value;
 	if (!name) {
-		// TODO: Show Error to the user
-		console.log('ERROR');
-		return;
+		errorPopUp("You need to provide a name for the new workspace you're creating", createWSBox);
+	} else {
+		pendingReq = true;
+		fetch('/create/' + name + '/' + langSelect.value, {
+			method: 'POST',
+		})
+			.then((res) => res.json() as Promise<ResCreateWorkspace>)
+			.then((res) => newWSResHandler(res, createWSBox));
 	}
-
-	pendingReq = true;
-	fetch('/create/' + name + '/' + langSelect.value, {
-		method: 'POST',
-	})
-		.then((res) => res.json() as Promise<ResCreateWorkspace>)
-		.then(newWSResHandler);
 }
 
-function newWSResHandler(res: ResCreateWorkspace) {
+function newWSResHandler(res: ResCreateWorkspace, parentEl: HTMLDivElement) {
 	pendingReq = false;
-	// TODO: Error Handling
 	if (!res.success) {
-		console.log({ res });
-		return;
+		console.log(parentEl);
+		errorPopUp([res.err!, 'Reload the page and try again'], parentEl);
+	} else {
+		const workspaceId = res.workspaceId;
+		localStorage.setItem('workspaceId', workspaceId);
+		window.location.href = '/editor';
 	}
-	const workspaceId = res.workspaceId;
-	localStorage.setItem('workspaceId', workspaceId);
-	window.location.href = '/editor';
 }

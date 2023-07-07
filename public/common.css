@@ -12,14 +12,15 @@ body {
 }
 
 body.light {
-	--back_color: #fff;
-	--back_color2: #f1f1f1;
+	--back_color: #fafafa;
+	--back_color2: #f3f3f3;
 	--back_sidebar: rgb(61, 79, 93);
 	--front_color: #111;
 	--front_sidebar: #8df2ff;
 	--front_box: #111;
 	--title_color: #8df2ff;
 	--borders: rgb(61, 79, 93);
+	--error_color: #e0051e;
 	--back_color_box: rgb(61, 79, 93);
 	--file_borders: rgb(61, 79, 93);
 	--drop_highlight: #fff;
@@ -29,14 +30,15 @@ body.light {
 }
 
 body.dark {
-	--back_color: #111;
-	--back_color2: #222;
+	--back_color: #101010;
+	--back_color2: #1a1a1a;
 	--back_sidebar: #080029;
 	--front_color: #fff;
 	--front_sidebar: #fff;
 	--front_box: #fff;
 	--title_color: #643dff;
-	--borders: #080029;
+	--borders: #070ab7;
+	--error_color: #e0051e;
 	--back_color_box: #050125;
 	--file_borders: #271e4b;
 	--drop_highlight: #fff;
@@ -46,14 +48,15 @@ body.dark {
 }
 
 body.contrast {
-	--back_color: #111;
-	--back_color2: #222;
+	--back_color: #101010;
+	--back_color2: #1a1a1a;
 	--back_sidebar: #9c8c03;
 	--front_color: #fff;
 	--front_sidebar: #111;
 	--front_box: #fff;
 	--title_color: #9c8c03;
 	--borders: #9c8c03;
+	--error_color: #e0051e;
 	--back_color_box: #352d00;
 	--file_borders: #9c8c03;
 	--drop_highlight: #fff;
@@ -63,14 +66,15 @@ body.contrast {
 }
 
 body.spooky {
-	--back_color: #111;
-	--back_color2: #222;
+	--back_color: #101010;
+	--back_color2: #1a1a1a;
 	--back_sidebar: rgb(145, 0, 0);
 	--front_color: #fff;
 	--front_sidebar: #111;
 	--front_box: #fff;
 	--title_color: rgb(145, 0, 0);
 	--borders: rgb(145, 0, 0);
+	--error_color: #e0051e;
 	--back_color_box: #300101;
 	--file_borders: rgb(145, 0, 0);
 	--drop_highlight: #fff;
@@ -103,6 +107,57 @@ body.spooky {
 	text-decoration: inherit;
 }
 
+.home-link-header {
+	display: inline-block;
+	margin: 0.2em 1em;
+}
+
+.centered-vertical {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+}
+
+.centered-horizontal {
+	display: block;
+	margin: auto;
+}
+
+.centered {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.error-popup {
+	z-index: 10;
+	width: 100%;
+	max-width: 17em;
+	padding: 2em;
+	color: var(--front_color);
+	border: 2px solid var(--borders);
+	background-color: var(--error_color);
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.error-popup-msg {
+	font-size: 1.2em;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.close-icon {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}
+
 .name-icon-container {
 	display: flex;
 	align-items: center;
@@ -124,18 +179,22 @@ body.spooky {
 	cursor: pointer;
 }
 
+header,
+footer {
+	background-color: var(--back_color);
+	color: var(--header_color);
+	padding: 10px;
+}
+
 button {
 	font-size: 1em;
 	padding: 0.6em;
 	color: var(--front_color);
-	background-color: var(--back_color);
+	background-color: var(--back_color2);
 	border: 1px solid var(--borders);
 	border-radius: 5px;
+	margin: 0.3em;
 	width: max-content;
-}
-
-button:hover {
-	cursor: pointer;
 }
 
 select {
@@ -144,37 +203,37 @@ select {
 	border-radius: 5px;
 	font-size: 16px;
 	color: var(--front_box);
-	background: var(--back_color);
+	background: var(--back_color2);
+	margin: 0.3em;
 }
 
 option {
-	background-color: var(--back_color);
+	background-color: var(--back_color2);
 	color: var(--front_box);
 	font-size: 16px;
-}
-
-select:focus {
-	outline: none;
-	border-color: var(--border_dropdown_color);
-	box-shadow: 0 0 5px var(--box_shadow);
-}
-
-select:hover {
-	cursor: pointer;
 }
 
 input[type='text'],
 input[type='password'] {
 	padding: 10px;
-	border: 1px solid var(--border_dropdown_color);
+	border: 1px solid var(--borders);
 	border-radius: 5px;
 	font-size: 16px;
 	color: var(--front_box);
-	background-color: var(--back_color);
+	background-color: var(--back_color2);
 }
 
+select:hover,
+input:hover,
+button:hover {
+	border-color: var(--border_dropdown_color);
+	cursor: pointer;
+}
+
+select:focus,
 input[type='text']:focus,
-input[type='password']:focus {
+input[type='password']:focus,
+button:active {
 	outline: none;
 	border-color: var(--border_dropdown_color);
 	box-shadow: 0 0 5px var(--box_shadow);

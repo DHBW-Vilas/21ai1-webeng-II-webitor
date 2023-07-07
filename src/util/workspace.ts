@@ -70,28 +70,6 @@ export function deleteById(root: WSDir, id: WSId): boolean {
 	else return deleteDirById(root, id);
 }
 
-// len is only accurate if idx === 0
-// TODO: use DisplayedWSDir and take isOpen into account
-function idxOfDirHelper(root: WSDir, id: WSId): { len: number; idx: number } {
-	let len = 0;
-	if (idEquals(root._id, id)) return { len, idx: 0 };
-
-	for (let d of root.dirs) {
-		let x = idxOfDirHelper(d, id);
-		if (x.idx >= 0) return { len, idx: len + x.idx + 1 };
-		len += x.len;
-	}
-
-	for (let i = 0; i < root.files.length; i++, len++) {
-		if (idEquals(root.files[i]._id, id)) return { len, idx: len + i };
-	}
-	return { len, idx: -1 };
-}
-
-export function idxOfDir(root: WSDir, id: WSId): number {
-	return idxOfDirHelper(root, id).idx;
-}
-
 export function strCmp(s1: string, s2: string): number {
 	for (let i = 0; i < s1.length && i < s2.length; i++) {
 		if (s1.charCodeAt(i) < s2.charCodeAt(i)) return -1;
@@ -128,18 +106,18 @@ export function addDir(parent: WSDir, dir: WSDir): number {
 	return parent.dirs.length - 1;
 }
 
-export function isValidName(parent: WSDir | null, name: string): boolean {
-	if (!name) return false;
-	// TODO: What are some rules for invalid file/folder names
-	if (parent) {
-		for (const f of parent.files) {
-			if (f.name == name) return false;
-		}
-		for (const d of parent.dirs) {
-			if (d.name == name) return false;
-		}
+export function isNameTaken(parent: WSDir, name: string): boolean {
+	for (const f of parent.files) {
+		if (f.name == name) return false;
+	}
+	for (const d of parent.dirs) {
+		if (d.name == name) return false;
 	}
 	return true;
+}
+
+export function isValidName(name: string): boolean {
+	return /^[a-z|A-Z|0-9| |_|-|.]+$/.test(name);
 }
 
 export default {
@@ -153,6 +131,6 @@ export default {
 	sortWS,
 	addFile,
 	addDir,
-	idxOfDir,
+	isNameTaken,
 	isValidName,
 };

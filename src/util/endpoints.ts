@@ -2,6 +2,7 @@ import { WSDir, WSElement, WSFile, WSId, Workspace } from '../models';
 
 export interface Res {
 	success: boolean;
+	err: string | undefined;
 }
 
 export interface ResGetWorkspaces extends Res {

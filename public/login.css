@@ -3,14 +3,10 @@ body {
 	background-color: var(--back_color2);
 }
 
-.container {
+#login-container {
 	width: 25em;
 	height: 22em;
 	padding: 2em;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
 	border: 2px solid var(--borders);
 	background-color: var(--back_color);
 	border-radius: 5px;

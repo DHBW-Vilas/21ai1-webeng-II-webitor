@@ -20,11 +20,11 @@ import { getLangExtension } from './lang';
 import { WSDir, WSFile, WSId, Workspace } from '../models';
 import ws from '../util/workspace';
 import { Res, ResCreateDir, ResCreateFile } from '../util/endpoints';
-import { addRenamableWorkspaceEls, downloadWorkspace } from './common';
+import { addRenamableWorkspaceEls, downloadWorkspace, errorPopUp } from './common';
 import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
 
 loadStyleFromCache();
-insertStyleSelector('afterend', document.querySelector('#home-button') as HTMLElement);
+insertStyleSelector('afterend', document.querySelector('.home-link-header') as HTMLElement);
 
 const fileExplorerEl = document.getElementById('file-explorer') as HTMLDivElement;
 const fileExplorerHeader = document.getElementById('file-explorer-header') as HTMLHeadingElement;
@@ -135,7 +135,7 @@ function getWorkspace() {
 						return getWorkspace();
 					});
 			}
-			if (!res.root) throw new Error('Keine gültiges Workspace vom Server erhalten');
+			if (!res.root) throw new Error('Received no valid workspace from the server. Reload the page and try again.');
 			root = {
 				_id: (res.root as WSDir)._id,
 				name: (res.root as WSDir).name,
@@ -164,9 +164,8 @@ function getWorkspace() {
 			newFileIcon.addEventListener('click', (ev) => newFile(root!));
 			newFolderIcon.addEventListener('click', (ev) => newFolder(root!));
 		})
-		.catch((err) => {
-			// TODO: Error Handling
-			console.log({ err });
+		.catch((err: Error) => {
+			errorPopUp(err.message);
 		});
 }
 openFile(null);
@@ -225,9 +224,8 @@ function openFile(file: DisplayedWSFile | null) {
 		editorView.setState(EditorState.create({ doc: '' }));
 		editorHeader.innerText = 'No File opened';
 	} else if (!file.isTextfile) {
-		// TODO: Error handling
 		editorHeader.innerText = file.name;
-		console.log('You can only open text files');
+		errorPopUp(['You cannot open a binary file.', "If the file actually is a text-file, make sure that it's properly UTF8-encoded."]);
 		return;
 	} else {
 		let fileExt = '';
@@ -314,8 +312,7 @@ function addClickableFilExplorerEl(id: WSId, iconName: string, depth: number, na
 			.then((res) => res.json() as Promise<Res>)
 			.then((res) => {
 				if (!res.success) {
-					// TODO: Error Handling
-					console.log({ res });
+					errorPopUp([res.err!, 'Try reloading the page. If the error consists, try to login again.']);
 				}
 			});
 	});
@@ -426,11 +423,10 @@ function addNew(parent: DisplayedWSDir, iconName: string, isFile: boolean, onCha
 	const { outer } = addFileExplorerEl('', iconName, parent.depth + 1, newElInput, parent, isFile, false);
 
 	const changed = () => {
-		if (!ws.isValidName(parent, newElInput.value)) {
-			// TODO:
-			console.log('Name already taken');
-			outer.remove();
-			return;
+		if (!ws.isValidName(newElInput.value)) {
+			errorPopUp("'" + newElInput.value + "' is not a valid " + (isFile ? 'file' : 'folder') + '-name.');
+		} else if (!ws.isNameTaken(parent, newElInput.value)) {
+			errorPopUp((isFile ? 'File' : 'Folder') + "-name '" + newElInput.value + "' is already taken.");
 		} else {
 			newElInput.disabled = true;
 			let url = '/workspace/' + (isFile ? 'file' : 'dir') + `/${workspaceId}/${parent._id}`;
@@ -445,11 +441,10 @@ function addNew(parent: DisplayedWSDir, iconName: string, isFile: boolean, onCha
 				.then((res) => {
 					outer.remove();
 					if (!res.success) {
-						// TODO: Error Handling
-						console.log({ res });
-						return;
+						errorPopUp(["Couldn't save changes. Server responded with:", "'" + res.err! + "'", 'Please try again and reload the page if the error consists.']);
+					} else {
+						onChange(newElInput, res.el);
 					}
-					onChange(newElInput, res.el);
 				});
 		}
 	};

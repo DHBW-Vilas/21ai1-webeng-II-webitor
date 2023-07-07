@@ -1,12 +1,14 @@
+import { errorPopUp } from './common';
 import { insertStyleSelector, loadStyleFromCache } from './switchStyle';
 
 loadStyleFromCache();
-insertStyleSelector('beforeend', document.querySelector('nav') as HTMLElement);
+insertStyleSelector('beforeend', document.querySelector('header') as HTMLElement);
 
 const nameInput = document.getElementById('name-input') as HTMLInputElement;
 const passInput = document.getElementById('pass-input') as HTMLInputElement;
 const registerBtn = document.getElementById('register-btn') as HTMLButtonElement;
 const loginBtn = document.getElementById('login-btn') as HTMLButtonElement;
+const loginContainer = document.getElementById('login-container') as HTMLDivElement;
 
 nameInput.focus();
 
@@ -31,12 +33,9 @@ function authenticate(isLogin: boolean) {
 			.then((res) => res.json())
 			.then((res) => {
 				if (res.success) document.location.href = res.url;
-				else {
-					// TODO: Error Handling
-					console.log(res);
-				}
+				else errorPopUp(res.err, loginContainer);
 			});
 	} else {
-		// TODO: Error Handling
+		errorPopUp('You need to enter your ' + (!name ? 'username' : 'password') + ' to ' + (isLogin ? 'login' : 'register'));
 	}
 }

@@ -14,7 +14,7 @@
     <div id="layout" class="g">
         <div class="sidebar">
             <div class="header">
-		    <h1 class="title">Webitor</h1>
+		    <h1 class="title"><a class="invisible-link" href="/">Webitor</a></h1>
             <h2 class="tagline">Your Coding Playground</h2>
         </div>
         <img class ="tagline" src="/public/logo1.png" alt="Logo" style="width:100%">
@@ -32,7 +32,7 @@
             <!-- wrapper -->
             <section class="post">
                 <header class="post-header">
-                    <h2 class="post-title">Welcome to Webitor</h2>
+                    <h2 class="post-title"><a class="invisible-link" href="/">Welcome to Webitor</a></h2>
                 </header>
                 <div class="post-description">
                     <p>
@@ -45,10 +45,10 @@
             <section class="post">
                 <header class="post-header">
                     <h2 class="post-title">Your Playground</h2>
-                    <button id="login-btn"><a class="invisible-link" href="/login">Sign Up/In</a></button>
+                    <button id="login-btn" class="centered-horizontal"><a class="invisible-link" href="/login">Sign Up/In</a></button>
                 </header>
                 <div id="container">
-                    <div class="box create-ws-box">
+                    <div id="ws-create-box" class="box create-ws-box">
                         <h2>Create new Workspace</h2>
                         <div class="label-input-container">
                             <label for="newWSName">Name:</label>
@@ -62,7 +62,7 @@
                         </p>
                     </div>
 
-                    <div class="box create-ws-box">
+                    <div id="ws-upload-box" class="box create-ws-box">
                         <h2>Upload local Workspace</h2>
                         <div class="label-input-container">
                             <label for="uploadWSName">Name:</label>

@@ -1,6 +1,37 @@
 import { WSId } from '../models';
 import { Res } from '../util/endpoints';
 
+export function errorPopUp(msgs: string | string[], parentEl: HTMLElement = document.body) {
+	const popUp = document.createElement('div');
+	popUp.classList.add('error-popup', 'centered');
+
+	const msgContainer = document.createElement('div');
+	msgContainer.classList.add('error-popup-msg');
+
+	if (!Array.isArray(msgs)) msgs = [msgs];
+	for (const msg of msgs) {
+		const msgEl = document.createElement('p');
+		msgEl.innerText = msg;
+		msgContainer.appendChild(msgEl);
+	}
+
+	const closeIcon = document.createElement('img');
+	closeIcon.src = '/public/icons/close.png';
+	closeIcon.classList.add('icon', 'clickable', 'close-icon');
+	closeIcon.addEventListener('click', (ev) => popUp.remove());
+
+	window.addEventListener('keypress', (ev) => {
+		console.log(ev.key);
+
+		if (ev.key == 'Escape') popUp.remove();
+	});
+	popUp.appendChild(msgContainer);
+	popUp.appendChild(closeIcon);
+	console.log(parentEl);
+
+	parentEl.appendChild(popUp);
+}
+
 export async function downloadWorkspace(workspaceId: string) {
 	const anchor = document.createElement('a');
 	anchor.href = '/download/' + workspaceId;
@@ -43,7 +74,7 @@ export function addRenamableWorkspaceEls(
 				.then((res) => res.json() as Promise<Res>)
 				.then((res) => {
 					if (!res.success) {
-						// TODO: Show Error to user
+						errorPopUp(res.err!);
 					} else {
 						nameEl!.innerText = newName;
 					}
@@ -80,4 +111,5 @@ export function addRenamableWorkspaceEls(
 export default {
 	addRenamableWorkspaceEls,
 	downloadWorkspace,
+	errorPopUp,
 };

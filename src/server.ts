@@ -52,6 +52,8 @@ if (!existsSync(tmpDir)) fs.mkdir(tmpDir);
 const SALT_ROUNDS = 10;
 const MAX_AUTH_TIME = 1000 * 60 * 60 * 12 * 5; // 5 days (in ms)
 const MAX_URL_COOKIE_TIME = 1000 * 60 * 60 * 12 * 2; // 2 days (in ms)
+const UNAUTHORIZED_MSG = 'Not authorized to change this workspace';
+const UNAUTHENTICATED_MSG = 'Not authenticated - Please login first';
 
 // Global State
 const AUTH_TOKS: { [index: string]: string | ObjectId | undefined } = {};
@@ -120,7 +122,7 @@ async function rmAnonUsers(before = Date.now() - ANON_USER_LIFETIME) {
 // req.userId holds the user ID or an error is raised
 async function forceAuth(req: Req, res: Response, next: NextFunction) {
 	if (await checkAuth(req, res, false)) next();
-	else next(new Error('Unauthenticated'));
+	else next(new Error(UNAUTHENTICATED_MSG));
 }
 
 function authErrRedirect(err: ErrorRequestHandler, req: Req, res: Response, next: NextFunction) {
@@ -134,7 +136,7 @@ function authErrRedirect(err: ErrorRequestHandler, req: Req, res: Response, next
 function authErrJSON(obj = {}) {
 	return (err: ErrorRequestHandler, req: Req, res: Response, next: NextFunction) => {
 		if (req.userId === null) {
-			res.json({ ...obj, ...{ success: false, err: 'Not Authenticated' } });
+			res.json({ ...obj, ...{ success: false, err: UNAUTHENTICATED_MSG } });
 		} else {
 			next(err);
 		}
@@ -234,7 +236,7 @@ app.get('/', (req, res) => {
 		return setAuthCookie(res, authTok).status(200).json({ success: true, url: newURL });
 	})
 	.get('/workspaces', async (req, res) => {
-		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: 'Not authenticated' });
+		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });
 		const user = await Models.user.findById((req as Req).userId);
 		const workspaces: Workspace[] = [];
 		for await (const workspaceId of user?.workspaces ?? []) {
@@ -252,7 +254,7 @@ app.get('/', (req, res) => {
 		if (ext === 'empty') helloWorld = emptyHelloWorld;
 		else {
 			helloWorld = lang.getLangHelloWorld(ext);
-			if (!helloWorld) return res.json({ success: false, err: 'Unknown Language provided' });
+			if (!helloWorld) return res.json({ success: false, err: 'Unknown Language provided for creating new workspace' });
 		}
 
 		const workspace = await Models.workspace.create(helloWorld(workspaceName, [userId], utf8_to_b64));
@@ -277,7 +279,6 @@ app.get('/', (req, res) => {
 				uploadDir: tmpDir,
 			});
 			form.parse(req, async (err, fields, files) => {
-				// TODO: Better error handling
 				if (err) throw err;
 
 				let idCounter = 0;
@@ -327,20 +328,21 @@ app.get('/', (req, res) => {
 				res.json({ success: true, workspaceId: workspaceDoc._id });
 			});
 		} catch (e) {
-			// TODO: Error Handling
+			console.error(e);
+			res.json({ success: false, err: 'Internal Error when trying to upload workspace' });
 		}
 	})
 	.post('/empty/workspace', async (req, res) => {
-		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: 'Unauthenticated' });
+		if (!(await checkAuth(req as Req, res, true))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });
 		const workspace = await Models.workspace.create({ name: 'Unnamed', dirs: [], files: [], editors: [(req as unknown as Req).userId], idCounter: 0 });
 		await Models.user.updateOne({ _id: (req as unknown as Req).userId }, { $push: { workspaces: workspace._id } });
 		return res.json({ success: true, workspaceId: workspace._id });
 	})
 	.put('/rename/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
-		if (!(await checkAuth(req as unknown as Req, res))) return res.json({ success: false, err: 'Unauthenticated' });
-		if (!ws.isValidName(null, req.body.name)) return res.json({ success: false, err: 'Invalid Workspace name' });
+		if (!(await checkAuth(req as unknown as Req, res))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });
+		if (!ws.isValidName(req.body.name)) return res.json({ success: false, err: 'Invalid name for workspace' });
 		const workspace = await Models.workspace.findById(req.params.workspaceId);
-		if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.json({ success: false, err: 'Unauthorized' });
+		if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.json({ success: false, err: UNAUTHORIZED_MSG });
 
 		await Models.workspace.findByIdAndUpdate(req.params.workspaceId, { name: req.body.name });
 		return res.json({ success: true });
@@ -355,15 +357,19 @@ app.get('/', (req, res) => {
 		res.setHeader('content-description', 'File Transfer');
 		res.setHeader('content-transfer-encoding', 'binary');
 
-		const Zipper = archiver.create('zip');
-		res.on('finish', () => {
-			res.end();
-		});
-		Zipper.on('warning', (w) => console.log({ warning: w }));
-		Zipper.on('error', (e) => console.log({ error: e }));
-		Zipper.pipe(res);
-		archiveDir(Zipper, workspace as unknown as Workspace);
-		Zipper.finalize();
+		try {
+			const Zipper = archiver.create('zip');
+			res.on('finish', () => {
+				res.end();
+			});
+			Zipper.on('warning', (w) => console.log({ warning: w }));
+			Zipper.on('error', (e) => console.log({ error: e }));
+			Zipper.pipe(res);
+			archiveDir(Zipper, workspace as unknown as Workspace);
+			Zipper.finalize();
+		} catch (e) {
+			res.status(401).end();
+		}
 	})
 	.get('/workspace/:workspaceId', async (req, res) => {
 		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false });
@@ -374,36 +380,36 @@ app.get('/', (req, res) => {
 	})
 	.put('/workspace/file/:workspaceId/:fileId', async (req, res) => {
 		// New File Content should be the body
-		// TODO: Error Handling
 		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false });
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
+			if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.json({ success: false, err: UNAUTHORIZED_MSG });
 			const file = ws.findFileById(workspace as unknown as Workspace, req.params.fileId as WSId);
 			if (file) file.content = Buffer.from(req.body.text, 'base64');
 			const mongooseRes = await workspace?.updateOne({ files: workspace.files, dirs: workspace.dirs });
 			res.json({ success: mongooseRes.acknowledged });
 		} catch (e) {
 			console.error(e);
-			res.json({ success: false, err: 'Internal Error' });
+			res.json({ success: false, err: 'Internal Error when trying to update file' });
 		}
 	})
 	.delete('/workspace/:workspaceId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// Delete workspace with _id == workspaceId
 		let Req = req as unknown as Req;
-		if (!(await checkAuth(Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
+		if (!(await checkAuth(Req, res, false))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });
 		try {
 			const workspace = (await Models.workspace.findById(req.params.workspaceId)) as unknown as Workspace;
-			if (!workspace.editors.includes(Req.userId as ObjectId)) return res.json({ success: false, err: 'Unauthorized' });
+			if (!workspace.editors.includes(Req.userId as ObjectId)) return res.json({ success: false, err: UNAUTHORIZED_MSG });
 			await Models.workspace.findByIdAndDelete(req.params.workspaceId);
 			return res.json({ success: true });
 		} catch (e) {
 			console.error(e);
-			res.json({ success: false, err: 'Internal Error' });
+			res.json({ success: false, err: 'Internal Error when trying to delete workspace' });
 		}
 	})
 	.delete('/workspace/:workspaceId/:fileOrDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
 		// Delete file / dir with _id == fileOrDirId
-		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });
 		try {
 			const workspace = (await Models.workspace.findById(req.params.workspaceId)) as unknown as Workspace;
 			const deleted = ws.deleteById(workspace, req.params.fileOrDirId as WSId);
@@ -414,14 +420,16 @@ app.get('/', (req, res) => {
 			res.json({ success: true });
 		} catch (e) {
 			console.error(e);
-			res.json({ success: false, err: 'Internal Error' });
+			res.json({ success: false, err: 'Internal Error when trying to delete file/folder' });
 		}
 	})
 	.post('/workspace/file/:workspaceId/:parentDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
-		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
 			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
+			if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.json({ success: false, err: UNAUTHORIZED_MSG });
+
 			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
 			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
 			const file = {
@@ -434,14 +442,17 @@ app.get('/', (req, res) => {
 			await Models.workspace.findByIdAndUpdate(workspace._id, { idCounter: workspace.idCounter, dirs: workspace.dirs, files: workspace.files });
 			return res.json({ success: true, el: file });
 		} catch (e) {
-			res.json({ success: false, err: 'Internal Error' });
+			console.error(e);
+			res.json({ success: false, err: 'Internal Error when trying to create new file' });
 		}
 	})
 	.post('/workspace/dir/:workspaceId/:parentDirId', [forceAuth, authErrJSON()] as unknown as RequestHandler, async (req, res) => {
-		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: 'Unauthorized' });
+		if (!(await checkAuth(req as unknown as Req, res, false))) return res.json({ success: false, err: UNAUTHENTICATED_MSG });
 		try {
 			const workspace = await Models.workspace.findById(req.params.workspaceId);
 			if (!workspace || workspace.idCounter === undefined) return res.json({ success: false, err: "Workspace wasn't found" });
+			if (!workspace?.editors.includes((req as unknown as Req).userId as any)) return res.json({ success: false, err: UNAUTHORIZED_MSG });
+
 			const parentDir = ws.findDirById(workspace as unknown as Workspace, req.params.parentDirId);
 			if (!parentDir) return res.json({ success: false, err: 'Invalid Parent-Directory ID' });
 			const dir = {
@@ -454,7 +465,8 @@ app.get('/', (req, res) => {
 			await Models.workspace.findByIdAndUpdate(workspace._id, { idCounter: workspace.idCounter, dirs: workspace.dirs });
 			return res.json({ success: true, el: dir });
 		} catch (e) {
-			res.json({ success: false, err: 'Internal Error' });
+			console.error(e);
+			res.json({ success: false, err: 'Internal Error when trying to create new folder' });
 		}
 	});
 

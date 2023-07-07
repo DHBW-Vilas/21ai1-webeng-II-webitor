@@ -9,6 +9,7 @@
 /* Style the header and footer */
 
 .box {
+	position: relative;
 	color: var(--front_box);
 	background-color: var(--back_color);
 	padding: 20px;
@@ -88,10 +89,8 @@
 	padding: 2em 1em 0;
 }
 
-.post {
-	padding-bottom: 2em;
-}
 .post-title {
+	text-align: center;
 	font-size: 2em;
 	color: var(--front_body);
 	margin-bottom: 0.2em;
